@@ -1,15 +1,20 @@
 import { TextField } from "@mui/material/";
-import { FC, useContext, useState } from "react";
+import { FC, useCallback, useContext, useState } from "react";
 import { AppContext } from "../App/App";
 import { DialogBase } from "./DialogBase";
 
 export const CreatePlayerDialog: FC = () => {
-  const { requests, createDialogIsOpen, closeCreateDialog, doReload } = useContext(AppContext);
+  const { requests, createDialogIsOpen, closeCreateDialog, doReload, setAlertMessage } = useContext(AppContext);
   const [name, setName] = useState<string>("");
 
   const resetForm = () => setName("");
 
-  const createRequest = () => {
+  const createRequest = useCallback(() => {
+    if (name.trim() === "") {
+      setAlertMessage("Name is required!");
+      return;
+    }
+
     const data = { name };
 
     requests.createPlayerRequest({ requestBody: data }, (_: string) => {
@@ -17,7 +22,7 @@ export const CreatePlayerDialog: FC = () => {
       closeCreateDialog();
       resetForm();
     });
-  };
+  }, [name]);
 
   return (
     <DialogBase

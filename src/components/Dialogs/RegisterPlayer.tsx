@@ -1,9 +1,9 @@
 import { Autocomplete, TextField } from "@mui/material/";
-import { FC, useContext, useEffect, useState } from "react";
-import { PlayerDisplayDTO } from "../../utils/Types";
+import { FC, useCallback, useContext, useEffect, useState } from "react";
 import { AppContext } from "../App/App";
 import { DialogBase } from "./DialogBase";
 import { UserRole } from "../../utils/UserRoles";
+import { CompetitionDisplayDTO } from "../../utils/Types";
 
 interface RegisterPlayerDialogProps {
   dialogIsOpen: boolean;
@@ -17,35 +17,37 @@ export const RegisterPlayerDialog: FC<RegisterPlayerDialogProps> = ({
   closeDialog,
 }: RegisterPlayerDialogProps) => {
   const { user, requests, doReload } = useContext(AppContext);
-  const [player, setPlayer] = useState<PlayerDisplayDTO>();
-  const [players, setPlayers] = useState<PlayerDisplayDTO[]>([]);
+  const [players, setPlayers] = useState<CompetitionDisplayDTO[]>([]);
+  const [playerId, setPlayerId] = useState<string>();
 
   useEffect(() => {
     if (user?.role !== UserRole.Administrator) return;
     getPlayersNotInCompetition();
   }, []);
 
-  const resetForm = () => {
-    setPlayer(undefined);
-  };
+  const resetForm = () => setPlayerId(undefined);
 
-  const getPlayersNotInCompetition = () =>
-    requests.getPlayersNotInCompetitionRequest({ id }, (response: string) => setPlayers(JSON.parse(response).items));
+  const getPlayersNotInCompetition = useCallback(
+    () =>
+      requests.getPlayersNotInCompetitionRequest({ id }, (response: string) => setPlayers(JSON.parse(response).items)),
+    [id]
+  );
 
-  const registerRequest = () => {
-    if (!player) return;
-    requests.registerCompetitorToCompetitionAdminRequest({ id, auxId: player.id }, (_: string) => {
-      doReload();
-      closeDialog();
-      resetForm();
-    });
-  };
+  const registerPlayerRequest = useCallback(
+    () =>
+      requests.registerCompetitorToCompetitionAdminRequest({ id, auxId: playerId }, (_: string) => {
+        doReload();
+        closeDialog();
+        resetForm();
+      }),
+    [id, playerId]
+  );
 
   return (
     <DialogBase
       title={"Register player"}
       open={dialogIsOpen}
-      doAction={{ name: "Register", handle: registerRequest }}
+      doAction={{ name: "Register", handle: registerPlayerRequest }}
       handleClose={() => {
         closeDialog();
         resetForm();
@@ -57,7 +59,7 @@ export const RegisterPlayerDialog: FC<RegisterPlayerDialogProps> = ({
         options={players}
         getOptionLabel={(player) => player.name}
         filterOptions={(x) => x}
-        onChange={(_, value) => setPlayer(value ?? undefined)}
+        onChange={(_, value) => setPlayerId(value?.id ?? undefined)}
         renderInput={(params) => (
           <TextField
             {...params}

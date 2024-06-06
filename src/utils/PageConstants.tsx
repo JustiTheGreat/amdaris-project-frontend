@@ -4,14 +4,14 @@ import { useNavigate } from "react-router-dom";
 const domain: string = "https://localhost:7107/";
 export const authenticationPath: string = "/";
 export const competitionPath: string = "Competition";
-export const oneVSAllCompetitionPath: string = "OneVSAllCompetition";
-export const tournamentCompetitionPath: string = "TournamentCompetition";
+const oneVSAllCompetitionPath: string = "OneVSAllCompetition";
+const tournamentCompetitionPath: string = "TournamentCompetition";
 export const competitorPath: string = "Competitor";
 export const playerPath: string = "Player";
 export const teamPath: string = "Team";
 export const matchPath: string = "Match";
 export const gameFormatPath: string = "GameFormat";
-export const gameTypePath: string = "GameType";
+const gameTypePath: string = "GameType";
 const pointPath: string = "Point";
 
 const createOneVSAllCompetitionPath = `${competitionPath}/${oneVSAllCompetitionPath}`;
@@ -26,14 +26,8 @@ const getTeamsPath = `${competitorPath}/GetPaginatedTeams`;
 const getGameFormatsPath = `${gameFormatPath}/GetPaginatedGameFormats`;
 const getGameTypesPath = `${gameTypePath}/GetPaginatedGameTypes`;
 
-export const getCompetitionRankingPath = `${competitionPath}/GetCompetitionRanking`;
-export const getCompetitionWinnersPath = `${competitionPath}/GetCompetitionWinners`;
-export const stopCompetitionRegistrationsPath = `${competitionPath}/StopCompetitionRegistration`;
-export const startCompetitionPath = `${competitionPath}/StartCompetition`;
-export const endCompetitionPath = `${competitionPath}/EndCompetition`;
-export const cancelCompetitionPath = `${competitionPath}/CancelCompetition`;
-export const registerCompetitorToCompetitionPath = `${competitionPath}/AddCompetitorToCompetition`;
-export const removeCompetitorFromCompetitionPath = `${competitionPath}/RemoveCompetitorFromCompetition`;
+const loginPath = "User/Login";
+const registerPath = "User/Register";
 
 export const startMatchPath = `${matchPath}/StartMatch`;
 export const endMatchPath = `${matchPath}/EndMatch`;
@@ -82,9 +76,11 @@ export const useRequests = (token: string | undefined, setAlertMessage: (message
       .then(async (response) => {
         const responseText: string = await response.text();
         if (response.status === 200 || response.status === 204) callback ? callback(responseText) : undefined;
-        else if (response.status === 401) {
-          setAlertMessage("Session expired!");
+        else if (response.status === 401 || response.status === 403) {
+          setAlertMessage(responseText);
           navigate(authenticationPath);
+        } else if (response.status === 409) {
+          setAlertMessage(responseText);
         } else setAlertMessage(responseText);
       })
       .catch((error) => setAlertMessage(error.message));
@@ -92,9 +88,9 @@ export const useRequests = (token: string | undefined, setAlertMessage: (message
 
   const authenticationRequests = {
     loginRequest: (data: APRequestData, callback: (response: string) => void) =>
-      request("User/Login", "POST", callback, data.requestBody),
+      request(loginPath, "POST", callback, data.requestBody),
     registerRequest: (data: APRequestData, callback: (response: string) => void) =>
-      request("User/Register", "POST", callback, data.requestBody),
+      request(registerPath, "POST", callback, data.requestBody),
   };
 
   const paginatedRequests = {
@@ -121,43 +117,43 @@ export const useRequests = (token: string | undefined, setAlertMessage: (message
 
   const rankingRequests = {
     getCompetitionRankingRequest: (data: APRequestData, callback: (response: string) => void) =>
-      request(`${getCompetitionRankingPath}/${data.id}`, "GET", callback),
+      request(`${competitionPath}/GetCompetitionRanking/${data.id}`, "GET", callback),
     getCompetitionWinnersRequest: (data: APRequestData, callback: (response: string) => void) =>
-      request(`${getCompetitionWinnersPath}/${data.id}`, "GET", callback),
+      request(`${competitionPath}/GetCompetitionWinners/${data.id}`, "GET", callback),
   };
 
   const competitionStatusRequests = {
     stopCompetitionRegistrationsRequest: (data: APRequestData, callback: (response: string) => void) =>
-      request(`${stopCompetitionRegistrationsPath}/${data.id}`, "PUT", callback),
+      request(`${competitionPath}/StopCompetitionRegistration/${data.id}`, "PUT", callback),
     startCompetitionRequest: (data: APRequestData, callback: (response: string) => void) =>
-      request(`${startCompetitionPath}/${data.id}`, "PUT", callback),
+      request(`${competitionPath}/StartCompetition/${data.id}`, "PUT", callback),
     endCompetitionRequest: (data: APRequestData, callback: (response: string) => void) =>
-      request(`${endCompetitionPath}/${data.id}`, "PUT", callback),
+      request(`${competitionPath}/EndCompetition/${data.id}`, "PUT", callback),
     cancelCompetitionRequest: (data: APRequestData, callback: (response: string) => void) =>
-      request(`${cancelCompetitionPath}/${data.id}`, "PUT", callback),
+      request(`${competitionPath}/CancelCompetition/${data.id}`, "PUT", callback),
   };
 
   const competitionCompetitorsRequests = {
     getPlayersNotInCompetitionRequest: (data: APRequestData, callback: (response: string) => void) =>
       request(`${competitorPath}/GetPlayersNotInCompetition/${data.id}`, "GET", callback),
-    GetTeamsThatCanBeAddedToCompetitionRequest: (data: APRequestData, callback: (response: string) => void) =>
+    getTeamsThatCanBeAddedToCompetitionRequest: (data: APRequestData, callback: (response: string) => void) =>
       request(`${competitorPath}/GetTeamsThatCanBeAddedToCompetition/${data.id}`, "GET", callback),
     registerCompetitorToCompetitionAdminRequest: (data: APRequestData, callback: (response: string) => void) =>
       request(
-        `${registerCompetitorToCompetitionPath}/${competitionPath}/${data.id}/${competitorPath}/${data.auxId}`,
+        `${competitionPath}/AddCompetitorToCompetition/${competitionPath}/${data.id}/${competitorPath}/${data.auxId}`,
         "PUT",
         callback
       ),
     registerCompetitorToCompetitionUserRequest: (data: APRequestData, callback: (response: string) => void) =>
-      request(`${registerCompetitorToCompetitionPath}/${data.id}`, "PUT", callback),
+      request(`${competitionPath}/AddCompetitorToCompetition/${data.id}`, "PUT", callback),
     removeCompetitorFromCompetitionAdminRequest: (data: APRequestData, callback: (response: string) => void) =>
       request(
-        `${removeCompetitorFromCompetitionPath}/${competitionPath}/${data.id}/${competitorPath}/${data.auxId}`,
+        `${competitionPath}/RemoveCompetitorFromCompetition/${competitionPath}/${data.id}/${competitorPath}/${data.auxId}`,
         "PUT",
         callback
       ),
     removeCompetitorFromCompetitionUserRequest: (data: APRequestData, callback: (response: string) => void) =>
-      request(`${removeCompetitorFromCompetitionPath}/${data.id}`, "PUT", callback),
+      request(`${competitionPath}/RemoveCompetitorFromCompetition/${data.id}`, "PUT", callback),
   };
 
   const teamPlayersRequests = {
@@ -168,9 +164,9 @@ export const useRequests = (token: string | undefined, setAlertMessage: (message
     addPlayerToTeamUserRequest: (data: APRequestData, callback: (response: string) => void) =>
       request(`TeamPlayer/AddPlayerToTeam/${teamPath}/${data.id}`, "POST", callback),
     changeTeamPlayerStatusAdminRequest: (data: APRequestData, callback: (response: string) => void) =>
-      request(`TeamPlayer/ChangeTeamPlayerStatus/${teamPath}/${data.id}/${playerPath}/${data.auxId}`, "POST", callback),
+      request(`TeamPlayer/ChangeTeamPlayerStatus/${teamPath}/${data.id}/${playerPath}/${data.auxId}`, "PUT", callback),
     changeTeamPlayerStatusUserRequest: (data: APRequestData, callback: (response: string) => void) =>
-      request(`TeamPlayer/ChangeTeamPlayerStatus/${teamPath}/${data.id}`, "POST", callback),
+      request(`TeamPlayer/ChangeTeamPlayerStatus/${teamPath}/${data.id}`, "PUT", callback),
     removePlayerFromTeamAdminRequest: (data: APRequestData, callback: (response: string) => void) =>
       request(`TeamPlayer/RemovePlayerFromTeam/${teamPath}/${data.id}/${playerPath}/${data.auxId}`, "DELETE", callback),
     removePlayerFromTeamUserRequest: (data: APRequestData, callback: (response: string) => void) =>

@@ -1,9 +1,9 @@
 import { Autocomplete, TextField } from "@mui/material/";
-import { FC, useContext, useEffect, useState } from "react";
-import { PlayerDisplayDTO } from "../../utils/Types";
+import { FC, useCallback, useContext, useEffect, useState } from "react";
 import { AppContext } from "../App/App";
 import { DialogBase } from "./DialogBase";
 import { UserRole } from "../../utils/UserRoles";
+import { CompetitionDisplayDTO } from "../../utils/Types";
 
 interface RegisterMemberDialogProps {
   dialogIsOpen: boolean;
@@ -17,29 +17,30 @@ export const RegisterMemberDialog: FC<RegisterMemberDialogProps> = ({
   closeDialog,
 }: RegisterMemberDialogProps) => {
   const { user, requests, doReload } = useContext(AppContext);
-  const [player, setPlayer] = useState<PlayerDisplayDTO>();
-  const [players, setPlayers] = useState<PlayerDisplayDTO[]>([]);
+  const [players, setPlayers] = useState<CompetitionDisplayDTO[]>([]);
+  const [playerId, setPlayerId] = useState<string>();
 
   useEffect(() => {
     if (user?.role !== UserRole.Administrator) return;
     getPlayersNotInTeam();
   }, []);
 
-  const resetForm = () => {
-    setPlayer(undefined);
-  };
+  const resetForm = () => setPlayerId(undefined);
 
-  const getPlayersNotInTeam = () =>
-    requests.getPlayersNotInTeamRequest({ id }, (response: string) => setPlayers(JSON.parse(response).items));
+  const getPlayersNotInTeam = useCallback(
+    () => requests.getPlayersNotInTeamRequest({ id }, (response: string) => setPlayers(JSON.parse(response).items)),
+    [id]
+  );
 
-  const addPlayerToTeam = () => {
-    if (!player) return;
-    requests.addPlayerToTeamAdminRequest({ id, auxId: player.id }, (_: string) => {
-      doReload();
-      closeDialog();
-      resetForm();
-    });
-  };
+  const addPlayerToTeam = useCallback(
+    () =>
+      requests.addPlayerToTeamAdminRequest({ id, auxId: playerId }, (_: string) => {
+        doReload();
+        closeDialog();
+        resetForm();
+      }),
+    [id, playerId]
+  );
 
   return (
     <DialogBase
@@ -57,12 +58,13 @@ export const RegisterMemberDialog: FC<RegisterMemberDialogProps> = ({
         options={players}
         getOptionLabel={(player) => player.name}
         filterOptions={(x) => x}
-        onChange={(_, value) => setPlayer(value ?? undefined)}
+        onChange={(_, value) => setPlayerId(value?.id ?? undefined)}
         renderInput={(params) => (
           <TextField
             {...params}
             label="Player"
             required
+            onChange={() => {}}
           />
         )}
       />

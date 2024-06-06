@@ -12,13 +12,17 @@ import {
 import { FC, useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { competitionPath } from "../../utils/PageConstants";
-import { AuthenticationAction } from "../../utils/Types";
 import { AppContext } from "../App/App";
 import { AuthenticationFormFieldContainer } from "./AuthenticationFormFieldContainer/AuthenticationFormFieldContainer";
 
+enum AuthenticationAction {
+  LOGIN = "Login",
+  REGISTER = "Register",
+}
+
 export const Authentication: FC = () => {
   const navigate = useNavigate();
-  const { setToken, requests, doReload } = useContext(AppContext);
+  const { setToken, requests, setAlertMessage } = useContext(AppContext);
   const [authenticationAction, setAuthenticationAction] = useState<AuthenticationAction>(AuthenticationAction.LOGIN);
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
@@ -30,6 +34,31 @@ export const Authentication: FC = () => {
   useEffect(() => resetForm(), [authenticationAction]);
 
   const onSubmit = () => {
+    if (email.trim() === "") {
+      setAlertMessage("Email is required!");
+      return;
+    }
+    const emailIsValid = (email: string): boolean => /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email);
+    if (!emailIsValid(email)) {
+      setAlertMessage("Enter a valid email address!");
+      return;
+    }
+    if (password.trim() === "") {
+      setAlertMessage("Password is required!");
+      return;
+    }
+    if (authenticationAction === AuthenticationAction.REGISTER && firstName.trim() === "") {
+      setAlertMessage("First name is required!");
+      return;
+    }
+    if (authenticationAction === AuthenticationAction.REGISTER && lastName.trim() === "") {
+      setAlertMessage("Last name is required!");
+      return;
+    }
+    if (authenticationAction === AuthenticationAction.REGISTER && username.trim() === "") {
+      setAlertMessage("Username is required!");
+      return;
+    }
     const authenticationData = { email, password, firstName, lastName, username };
     authenticationAction === AuthenticationAction.LOGIN
       ? requests.loginRequest({ requestBody: authenticationData }, proceed)

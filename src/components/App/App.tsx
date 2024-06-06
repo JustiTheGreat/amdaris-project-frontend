@@ -11,7 +11,8 @@ import {
   teamPath,
   useRequests,
 } from "../../utils/PageConstants";
-import { CompetitionDisplayDTO, GameFormatGetDTO, PlayerDisplayDTO, TeamDisplayDTO } from "../../utils/Types";
+import { CompetitionDisplayDTO, CompetitorDisplayDTO, GameFormatGetDTO } from "../../utils/Types";
+import { getUserObjectFromToken } from "../../utils/Utils";
 import {
   CompetitionKeysProperties,
   GameFormatKeysProperties,
@@ -24,13 +25,14 @@ import { CreateGameFormatDialog } from "../Dialogs/CreateGameFormatDialog";
 import { CreatePlayerDialog } from "../Dialogs/CreatePlayerDialog";
 import { CreateTeamDialog } from "../Dialogs/CreateTeamDialog";
 import { CompetitionPage } from "../ModelPages/CompetitionPage";
-import { NavigationBar } from "../NavigationBar/NavigationBar";
-import { NotFound } from "../NotFound/NotFound";
-import { PageContentContainer } from "../PageContentContainer/PageContentContainer";
-import { TableView } from "../TableView/TableView";
 import { CompetitorPage } from "../ModelPages/CompetitorPage";
 import { MatchPage } from "../ModelPages/MatchPage";
-import { getUserObjectFromToken } from "../../utils/Utils";
+import { NavigationBar } from "../NavigationBar/NavigationBar";
+import { NotFound } from "../NotFound/NotFound";
+import { NewPageContentContainer } from "../PageContentContainer/NewPageContentContainer";
+import { PageContentContainer } from "../PageContentContainer/PageContentContainer";
+import { TableView } from "../TableView/TableView";
+import { UnauthorizedContainer } from "../UnauthorizedContainer/UnauthorizedContainer";
 
 interface User {
   role: string;
@@ -68,10 +70,20 @@ export const App: FC = () => {
 
   const requests = useRequests(token, setAlertMessage);
 
-  const authenticated = useMemo<boolean>(
-    () => location.pathname !== authenticationPath && token != undefined,
+  const authenticated = useMemo<boolean>(() => {
+    console.log(location.pathname);
+    return location.pathname !== authenticationPath && token !== undefined;
+  }, [location.pathname]);
+
+  const unauthorizedAccess = useMemo(
+    () => !authenticated && location.pathname !== authenticationPath,
     [location.pathname]
   );
+
+  // useEffect(() => {
+  //   if (unauthorizedAccess) navigate(authenticationPath);
+  //   setAlertMessage("Page was refreshed!");
+  // }, [location.pathname]);
 
   useEffect(() => (authenticated ? setUser(getUserObjectFromToken(token!)) : undefined), [authenticated]);
 
@@ -125,18 +137,21 @@ export const App: FC = () => {
                 </PageContentContainer>
               }
             />
-            <Route element={<PageContentContainer />}>
+
+            <Route element={<UnauthorizedContainer unauthorizedAccess={unauthorizedAccess} />}>
               <Route path={competitionPath}>
                 <Route
                   index
                   element={
-                    <TableView<CompetitionDisplayDTO>
-                      tableName="Competitions"
-                      tableProperties={CompetitionKeysProperties}
-                      getItemsRequest={{ request: requests.getCompetitionsRequest, paginated: true }}
-                      navigateOnClick={{ navigationBaseRoute: competitionPath }}
-                      createDialog={<CreateCompetitionDialog />}
-                    />
+                    <NewPageContentContainer>
+                      <TableView<CompetitionDisplayDTO>
+                        tableName="Competitions"
+                        tableProperties={CompetitionKeysProperties}
+                        getItemsRequest={{ request: requests.getCompetitionsRequest, paginated: true }}
+                        navigateOnClick={{ navigationBaseRoute: competitionPath }}
+                        createDialog={<CreateCompetitionDialog />}
+                      />
+                    </NewPageContentContainer>
                   }
                 />
                 <Route
@@ -144,72 +159,76 @@ export const App: FC = () => {
                   element={<CompetitionPage />}
                 />
               </Route>
-              <Route path={playerPath}>
-                <Route
-                  index
-                  element={
-                    <TableView<PlayerDisplayDTO>
+
+              <Route
+                path={playerPath}
+                element={
+                  <NewPageContentContainer>
+                    <TableView<CompetitorDisplayDTO>
                       tableName="Players"
                       tableProperties={PlayerKeysProperties}
                       getItemsRequest={{ request: requests.getPlayersRequest, paginated: true }}
                       navigateOnClick={{ navigationBaseRoute: competitorPath }}
                       createDialog={<CreatePlayerDialog />}
                     />
-                  }
-                />
-              </Route>
-              <Route path={teamPath}>
-                <Route
-                  index
-                  element={
-                    <TableView<TeamDisplayDTO>
+                  </NewPageContentContainer>
+                }
+              />
+
+              <Route
+                path={teamPath}
+                element={
+                  <NewPageContentContainer>
+                    <TableView<CompetitorDisplayDTO>
                       tableName="Teams"
                       tableProperties={TeamKeysProperties}
                       getItemsRequest={{ request: requests.getTeamsRequest, paginated: true }}
                       navigateOnClick={{ navigationBaseRoute: competitorPath }}
                       createDialog={<CreateTeamDialog />}
                     />
-                  }
-                />
-              </Route>
+                  </NewPageContentContainer>
+                }
+              />
+
               <Route
                 path={`${competitorPath}/:id`}
                 element={<CompetitorPage />}
               />
+
               <Route
                 path={`${matchPath}/:id`}
                 element={<MatchPage />}
               />
-              <Route path={gameFormatPath}>
-                <Route
-                  index
-                  element={
+
+              <Route
+                path={gameFormatPath}
+                element={
+                  <NewPageContentContainer>
                     <TableView<GameFormatGetDTO>
                       tableName="Game formats"
                       tableProperties={GameFormatKeysProperties}
                       getItemsRequest={{ request: requests.getGameFormatsRequest, paginated: true }}
                       createDialog={<CreateGameFormatDialog />}
                     />
-                  }
-                />
-              </Route>
+                  </NewPageContentContainer>
+                }
+              />
             </Route>
+
             <Route
               path={"/*"}
               element={
-                <PageContentContainer
-                  width="30rem"
-                  height="30rem"
-                >
+                <NewPageContentContainer width={"30rem"}>
                   <NotFound />
-                </PageContentContainer>
+                </NewPageContentContainer>
               }
             />
           </Routes>
           <Snackbar
             open={Boolean(alertMesssage)}
-            autoHideDuration={3000}
+            autoHideDuration={10000}
             onClose={() => setAlertMessage(undefined)}
+            onClick={() => setAlertMessage(undefined)}
           >
             <Alert
               variant="filled"

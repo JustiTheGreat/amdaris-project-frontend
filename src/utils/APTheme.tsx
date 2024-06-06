@@ -1,4 +1,4 @@
-import { createTheme } from "@mui/material";
+import { alpha, createTheme } from "@mui/material";
 import "../index.css";
 
 declare module "@mui/material/styles/createPalette" {
@@ -37,6 +37,9 @@ const definedColors = {
   },
   focus: {
     main: oldRose,
+    contrastText: periwinkle,
+    activatedOpacity: 0.4,
+    hoverOpacity: 0.6,
   },
   error: {
     main: red,
@@ -71,7 +74,21 @@ export default createTheme({
     MuiTextField: { defaultProps: { variant: "outlined" } },
     MuiTab: {
       styleOverrides: {
-        root: { color: definedColors.primary.contrastText },
+        root: {
+          color: definedColors.primary.contrastText,
+          "&.Mui-selected": {
+            color: definedColors.focus.contrastText,
+
+            backgroundColor: alpha(definedColors.focus.main, definedColors.focus.activatedOpacity),
+          },
+          "&:hover": {
+            backgroundColor: alpha(definedColors.focus.main, definedColors.focus.hoverOpacity),
+          },
+          "&.Mui-selected :hover": {
+            color: definedColors.focus.contrastText,
+            backgroundColor: alpha(definedColors.focus.main, definedColors.focus.activatedOpacity),
+          },
+        },
       },
     },
     MuiTypography: {
@@ -117,10 +134,13 @@ export default createTheme({
       styleOverrides: {
         root: {
           "&.Mui-selected": {
-            backgroundColor: definedColors.focus.main,
+            backgroundColor: alpha(definedColors.focus.main, definedColors.focus.activatedOpacity),
           },
           "&:hover": {
-            backgroundColor: definedColors.focus.main,
+            backgroundColor: alpha(definedColors.focus.main, definedColors.focus.hoverOpacity),
+          },
+          "&.Mui-selected :hover": {
+            backgroundColor: alpha(definedColors.focus.main, definedColors.focus.activatedOpacity),
           },
         },
       },

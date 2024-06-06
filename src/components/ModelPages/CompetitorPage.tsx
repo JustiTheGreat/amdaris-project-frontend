@@ -1,17 +1,25 @@
-import { AppRegistration } from "@mui/icons-material";
-import { Button, IconButton, Tooltip, Typography } from "@mui/material";
+import {
+  AppRegistration,
+  EmojiEvents as EmojiEventsIcon,
+  Groups as GroupsIcon,
+  InfoOutlined as InfoOutlinedIcon,
+  Receipt as ReceiptIcon,
+  Scoreboard as ScoreboardIcon,
+} from "@mui/icons-material";
+import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
+import DoDisturbIcon from "@mui/icons-material/DoDisturb";
+import { Box, Button, IconButton, Tooltip, Typography } from "@mui/material";
 import { GridDeleteIcon } from "@mui/x-data-grid";
 import { FC, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
-import { competitionPath, competitorPath, matchPath, playerPath } from "../../utils/PageConstants";
+import { competitionPath, competitorPath, matchPath } from "../../utils/PageConstants";
 import {
   CompetitionDisplayDTO,
+  CompetitorDisplayDTO,
   CompetitorGetDTO,
   MatchDisplayDTO,
   MatchStatus,
-  PlayerDisplayDTO,
   PlayerGetDTO,
-  TeamDisplayDTO,
   TeamGetDTO,
 } from "../../utils/Types";
 import { UserRole } from "../../utils/UserRoles";
@@ -23,10 +31,8 @@ import {
 } from "../../utils/data";
 import { AppContext } from "../App/App";
 import { RegisterMemberDialog } from "../Dialogs/RegisterMember";
-import { PageContentContainer } from "../PageContentContainer/PageContentContainer";
+import { NewPageContentContainer, TabInfo } from "../PageContentContainer/NewPageContentContainer";
 import { TableView } from "../TableView/TableView";
-import DoDisturbIcon from "@mui/icons-material/DoDisturb";
-import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 
 export const CompetitorPage: FC = () => {
   const { user, requests } = useContext(AppContext);
@@ -38,6 +44,12 @@ export const CompetitorPage: FC = () => {
   const isUser = useMemo<boolean>(() => user?.role === UserRole.User, [user]);
   const isPlayer = useMemo<boolean>(() => (competitor as any as PlayerGetDTO)?.teams !== undefined, [competitor]);
   const isTeam = useMemo<boolean>(() => (competitor as any as TeamGetDTO)?.players !== undefined, [competitor]);
+  const normalUserCanRegister = useMemo<boolean>(() => {
+    if (!competitor || !user || !isTeam || !isUser) return false;
+    const team = competitor as any as TeamGetDTO;
+    const playerFromTeam: CompetitorDisplayDTO | undefined = team.players.find((player) => player.id === user.playerId);
+    return !playerFromTeam && !team.matches.find((match) => match.status === MatchStatus.STARTED);
+  }, [competitor]);
 
   useEffect(() => {
     getModel();
@@ -48,21 +60,30 @@ export const CompetitorPage: FC = () => {
     [id]
   );
 
-  const registerPlayerToTeamUser = () =>
-    requests.addPlayerToTeamUserRequest({ id }, (response: string) => setCompetitor(JSON.parse(response)));
+  const registerPlayerToTeamUser = useCallback(
+    () => requests.addPlayerToTeamUserRequest({ id }, (_: string) => getModel()),
+    [id]
+  );
 
-  const changeTeamPlayerStatusUser = () =>
-    requests.changeTeamPlayerStatusUserRequest({ id }, (response: string) => setCompetitor(JSON.parse(response)));
+  const changeTeamPlayerStatusUser = useCallback(
+    () => requests.changeTeamPlayerStatusUserRequest({ id }, (_: string) => getModel()),
+    [id]
+  );
 
-  const removePlayerFromTeamUser = () =>
-    requests.removePlayerFromTeamUserRequest({ id }, (response: string) => setCompetitor(JSON.parse(response)));
+  const removePlayerFromTeamUser = useCallback(
+    () => requests.removePlayerFromTeamUserRequest({ id }, (_: string) => getModel()),
+    [id]
+  );
 
-  const normalUserCanRegister = useMemo<boolean>(() => {
-    if (!competitor || !user || !isTeam || !isUser) return false;
-    const team = competitor as any as TeamGetDTO;
-    const playerFromTeam: PlayerDisplayDTO | undefined = team.players.find((player) => player.id === user.playerId);
-    return !playerFromTeam && !team.matches.find((match) => match.status === MatchStatus.STARTED);
-  }, [competitor]);
+  const changeTeamPlayerStatusAdmin = useCallback(
+    (auxId: string) => requests.changeTeamPlayerStatusAdminRequest({ id, auxId }, (_: string) => getModel()),
+    [id]
+  );
+
+  const removePlayerFromTeamAdmin = useCallback(
+    (auxId: string) => requests.removePlayerFromTeamAdminRequest({ id, auxId }, (_: string) => getModel()),
+    [id]
+  );
 
   const playerToolbarActions = [
     <Tooltip title={"Register player"}>
@@ -72,33 +93,121 @@ export const CompetitorPage: FC = () => {
     </Tooltip>,
   ];
 
-  const getPlayerActions = (rowId: string): JSX.Element[] => [
+  const getPlayerActions = (row: CompetitorDisplayDTO): JSX.Element[] => [
     <Tooltip title={"Change status"}>
       <IconButton
         onClick={(event) => {
           event.stopPropagation();
-          requests.changeTeamPlayerStatusAdminRequest({ id, auxId: rowId }, (response: string) =>
-            setCompetitor(JSON.parse(response))
-          );
+          changeTeamPlayerStatusAdmin(row.id);
         }}
       >
         <DoDisturbIcon />
-        {/* <CheckCircleOutlineIcon /> */}
+        <CheckCircleOutlineIcon />
       </IconButton>
     </Tooltip>,
     <Tooltip title={"Remove player"}>
       <IconButton
         onClick={(event) => {
           event.stopPropagation();
-          requests.removePlayerFromTeamAdminRequest({ id, auxId: rowId }, (response: string) =>
-            setCompetitor(JSON.parse(response))
-          );
+          removePlayerFromTeamAdmin(row.id);
         }}
       >
         <GridDeleteIcon />
       </IconButton>
     </Tooltip>,
   ];
+
+  const getTabInfoList = useCallback((): TabInfo[] => {
+    const tabInfoList: TabInfo[] = [];
+    if (!competitor || !user) return tabInfoList;
+    tabInfoList.push({
+      tooltip: "Details",
+      icon: <InfoOutlinedIcon fontSize="large" />,
+      content: (
+        <Box style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
+          <Typography variant="h4">{competitor.name}</Typography>
+        </Box>
+      ),
+    });
+    if (isTeam)
+      tabInfoList.push({
+        tooltip: "Actions",
+        icon: <ReceiptIcon fontSize="large" />,
+        content: isTeam && isUser && (
+          <Box style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
+            <Button
+              disabled={!normalUserCanRegister}
+              onClick={registerPlayerToTeamUser}
+            >
+              Register
+            </Button>
+            <Button
+              disabled={normalUserCanRegister}
+              onClick={changeTeamPlayerStatusUser}
+            >
+              Change status
+            </Button>
+            <Button
+              disabled={normalUserCanRegister}
+              onClick={removePlayerFromTeamUser}
+            >
+              Leave
+            </Button>
+          </Box>
+        ),
+      });
+    tabInfoList.push({
+      tooltip: "Competitions",
+      icon: <EmojiEventsIcon fontSize="large" />,
+      content: (
+        <TableView<CompetitionDisplayDTO>
+          tableName={"Competition"}
+          tableProperties={CompetitionKeysProperties}
+          dense
+          staticItems={competitor?.competitions}
+          navigateOnClick={{ navigationBaseRoute: competitionPath }}
+        />
+      ),
+    });
+    tabInfoList.push({
+      tooltip: isPlayer ? "Teams" : "Players",
+      icon: <GroupsIcon fontSize="large" />,
+      content: isPlayer ? (
+        <TableView<CompetitorDisplayDTO>
+          tableName={"Teams"}
+          tableProperties={TeamKeysProperties}
+          dense
+          staticItems={(competitor as any as PlayerGetDTO).teams}
+          navigateOnClick={{ navigationBaseRoute: competitorPath }}
+        />
+      ) : (
+        <TableView<CompetitorDisplayDTO>
+          tableName={"Players"}
+          tableProperties={PlayerKeysProperties}
+          deletableEntries
+          dense
+          staticItems={(competitor as any as TeamGetDTO).players}
+          navigateOnClick={{ navigationBaseRoute: competitorPath }}
+          getTableActions={isAdmin ? getPlayerActions : undefined}
+          toolbarActions={isAdmin ? playerToolbarActions : undefined}
+        />
+      ),
+    });
+    tabInfoList.push({
+      tooltip: "Matches",
+      icon: <ScoreboardIcon fontSize="large" />,
+      content: (
+        <TableView<MatchDisplayDTO>
+          tableName={"Matches"}
+          tableProperties={MatchKeysProperties}
+          dense
+          staticItems={competitor?.matches}
+          navigateOnClick={{ navigationBaseRoute: matchPath }}
+        />
+      ),
+    });
+    return tabInfoList;
+  }, [competitor]);
 
   return !competitor || !user ? (
     <></>
@@ -111,87 +220,7 @@ export const CompetitorPage: FC = () => {
           id={id}
         />
       )}
-      <Typography variant="h4">{competitor.name}</Typography>
-      {isTeam && isUser && (
-        <PageContentContainer
-          width="fit-content"
-          height="fit-content"
-        >
-          <Button
-            disabled={!normalUserCanRegister}
-            onClick={registerPlayerToTeamUser}
-          >
-            Register
-          </Button>
-          <Button
-            disabled={normalUserCanRegister}
-            onClick={changeTeamPlayerStatusUser}
-          >
-            Change status
-          </Button>
-          <Button
-            disabled={normalUserCanRegister}
-            onClick={removePlayerFromTeamUser}
-          >
-            Leave
-          </Button>
-        </PageContentContainer>
-      )}
-      <PageContentContainer
-        width="fit-content"
-        height="fit-content"
-      >
-        <TableView<MatchDisplayDTO>
-          tableName={"Matches"}
-          tableProperties={MatchKeysProperties}
-          dense
-          staticItems={competitor?.matches}
-          navigateOnClick={{ navigationBaseRoute: matchPath }}
-        />
-      </PageContentContainer>
-      <PageContentContainer
-        width="fit-content"
-        height="fit-content"
-      >
-        <TableView<CompetitionDisplayDTO>
-          tableName={"Competition"}
-          tableProperties={CompetitionKeysProperties}
-          dense
-          staticItems={competitor?.competitions}
-          navigateOnClick={{ navigationBaseRoute: competitionPath }}
-        />
-      </PageContentContainer>
-      {isPlayer && (
-        <PageContentContainer
-          width="fit-content"
-          height="fit-content"
-        >
-          <TableView<TeamDisplayDTO>
-            tableName={"Teams"}
-            tableProperties={TeamKeysProperties}
-            dense
-            staticItems={(competitor as any as PlayerGetDTO).teams}
-            navigateOnClick={{ navigationBaseRoute: competitorPath }}
-          />
-        </PageContentContainer>
-      )}
-      {isTeam && (
-        <PageContentContainer
-          width="fit-content"
-          height="fit-content"
-        >
-          <TableView<PlayerDisplayDTO>
-            tableName={"Players"}
-            tableProperties={PlayerKeysProperties}
-            deletableEntries
-            dense
-            staticItems={(competitor as any as TeamGetDTO).players}
-            navigateOnClick={{ navigationBaseRoute: competitorPath }}
-            getTableActions={getPlayerActions}
-            toolbarActions={playerToolbarActions}
-          />
-        </PageContentContainer>
-      )}
+      <NewPageContentContainer tabInfoList={getTabInfoList()} />
     </>
   );
 };

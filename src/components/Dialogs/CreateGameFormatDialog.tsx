@@ -1,13 +1,13 @@
 import { Autocomplete, Box, Checkbox, FormControlLabel, MenuItem, TextField } from "@mui/material/";
-import { FC, useContext, useEffect, useState } from "react";
+import { FC, useCallback, useContext, useEffect, useState } from "react";
 import { PaginatedRequest } from "../../utils/PageConstants";
 import { CompetitorType, GameTypeGetDTO, SortDirection } from "../../utils/Types";
-import { DialogBase } from "./DialogBase";
-import { AppContext } from "../App/App";
 import { UserRole } from "../../utils/UserRoles";
+import { AppContext } from "../App/App";
+import { DialogBase } from "./DialogBase";
 
 export const CreateGameFormatDialog: FC = () => {
-  const { user, requests, createDialogIsOpen, closeCreateDialog, doReload } = useContext(AppContext);
+  const { user, requests, createDialogIsOpen, closeCreateDialog, doReload, setAlertMessage } = useContext(AppContext);
   const [name, setName] = useState<string>("");
   const [gameType, setGameType] = useState<string>("");
   const [competitorType, setCompetitorType] = useState<CompetitorType>();
@@ -20,6 +20,7 @@ export const CreateGameFormatDialog: FC = () => {
   const [filter, setFilter] = useState("");
 
   useEffect(() => (winAt ? setOldWinAt(winAt) : undefined), [winAt]);
+
   useEffect(() => (durationInMinutes ? setOldDurationInMinutes(durationInMinutes) : undefined), [durationInMinutes]);
 
   useEffect(() => getGameTypeList(), [filter]);
@@ -59,7 +60,32 @@ export const CreateGameFormatDialog: FC = () => {
     );
   };
 
-  const createRequest = () => {
+  const createRequest = useCallback(() => {
+    if (name.trim() === "") {
+      setAlertMessage("Name is required!");
+      return;
+    }
+
+    if (gameType.trim() === "") {
+      setAlertMessage("Choose the type of the game!");
+      return;
+    }
+
+    if (competitorType === undefined) {
+      setAlertMessage("Choose the type of the competitor!");
+      return;
+    }
+
+    if (competitorType === CompetitorType.TEAM && teamSize === null) {
+      setAlertMessage("Choose the size of a team!");
+      return;
+    }
+
+    if (!winAt && !durationInMinutes) {
+      setAlertMessage("Choose at least one match end criteria: score or duration!");
+      return;
+    }
+
     const data = {
       name,
       gameType,
@@ -74,7 +100,7 @@ export const CreateGameFormatDialog: FC = () => {
       closeCreateDialog();
       resetForm();
     });
-  };
+  }, [name, gameType, competitorType, teamSize, winAt, durationInMinutes]);
 
   return (
     <DialogBase

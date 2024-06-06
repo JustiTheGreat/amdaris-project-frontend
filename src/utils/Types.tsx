@@ -1,11 +1,11 @@
-export enum AuthenticationAction {
-  LOGIN = "Login",
-  REGISTER = "Register",
-}
-
 export enum SortDirection {
   ASCENDING = "asc",
   DESCENDING = "desc",
+}
+
+export enum CompetitionType {
+  ONE_VS_ALL = "ONE_VS_ALL",
+  TOURNAMENT = "TOURNAMENT",
 }
 
 export enum CompetitionStatus {
@@ -36,37 +36,52 @@ export interface IdDTO {
 
 export interface DisplayDTO extends IdDTO {}
 
-export interface CompetitorDisplayDTO extends DisplayDTO {
-  name: string;
-  competitorType: string;
-}
-
-export interface PlayerDisplayDTO extends CompetitorDisplayDTO {}
-
-export interface TeamDisplayDTO extends CompetitorDisplayDTO {
-  numberOfPlayers: number;
-  numberOfActivePlayers: number;
-}
-
 export interface CompetitionDisplayDTO extends DisplayDTO {
   name: string;
+  competitionType: CompetitionType;
   status: CompetitionStatus;
   gameType: string;
   competitorType: CompetitorType;
 }
 
+export interface CompetitorDisplayDTO extends DisplayDTO {
+  name: string;
+  competitorType: CompetitorType;
+  numberOfCompetitions: number;
+  numberOfMatches: number;
+  numberOfTeams?: number;
+  numberOfPlayers?: number;
+  numberOfActivePlayers?: number;
+}
+
 export interface MatchDisplayDTO extends DisplayDTO {
   status: MatchStatus;
+  startTime?: Date;
   competitors: string;
+  score: string;
   competition: string;
-  competitorsPoints: string;
   winner: string | null;
-  startTime: Date;
 }
 
 export interface PointDisplayDTO extends DisplayDTO {
   value: number;
+  matchId: string;
+  playerId: string;
   player: string;
+}
+
+export interface TeamPlayerDisplayDTO extends DisplayDTO {
+  teamId: number;
+  team: string;
+  playerId: string;
+  player: string;
+  isActive: boolean;
+}
+
+export interface RankingItemDTO extends DisplayDTO {
+  competitor: string;
+  wins: number;
+  points: number;
 }
 
 export interface GetDTO extends IdDTO {}
@@ -97,15 +112,16 @@ export interface CompetitorGetDTO extends GetDTO {
   matches: MatchDisplayDTO[];
   wonMatches: string[];
   competitions: CompetitionDisplayDTO[];
+  teamPlayers: TeamPlayerDisplayDTO[];
 }
 
 export interface PlayerGetDTO extends CompetitionGetDTO {
   points: string[];
-  teams: TeamDisplayDTO[];
+  teams: CompetitorDisplayDTO[];
 }
 
 export interface TeamGetDTO extends CompetitionGetDTO {
-  players: PlayerDisplayDTO[];
+  players: CompetitorDisplayDTO[];
 }
 
 export interface GameFormatGetDTO extends GetDTO {
@@ -135,22 +151,4 @@ export interface MatchGetDTO extends GetDTO {
   stageLevel: number | null;
   stageIndex: number | null;
   points: PointDisplayDTO[];
-}
-
-export interface PointGetDTO extends GetDTO {
-  value: number;
-  match: string;
-  player: PlayerDisplayDTO;
-}
-
-export interface TeamPlayerGetDTO extends GetDTO {
-  teamId: string;
-  playerId: string;
-  isActive: boolean;
-}
-
-export interface RankingItemDTO extends IdDTO {
-  competitor: CompetitorDisplayDTO;
-  wins: number;
-  points: number;
 }

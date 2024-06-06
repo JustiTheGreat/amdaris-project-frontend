@@ -1,19 +1,15 @@
 import { Autocomplete, MenuItem, TextField } from "@mui/material/";
 import { DateTimePicker } from "@mui/x-date-pickers";
 import dayjs, { Dayjs } from "dayjs";
-import { FC, useContext, useEffect, useState } from "react";
+import { FC, useCallback, useContext, useEffect, useState } from "react";
 import { PaginatedRequest } from "../../utils/PageConstants";
-import { GameFormatGetDTO, SortDirection } from "../../utils/Types";
+import { CompetitionType, GameFormatGetDTO, SortDirection } from "../../utils/Types";
 import { UserRole } from "../../utils/UserRoles";
 import { AppContext } from "../App/App";
 import { DialogBase } from "./DialogBase";
 
 export const CreateCompetitionDialog: FC = () => {
-  const enum CompetitionType {
-    ONE_VS_ALL = "ONE VS ALL",
-    TOURNAMENT = "TOURNAMENT",
-  }
-  const { user, requests, createDialogIsOpen, closeCreateDialog, doReload } = useContext(AppContext);
+  const { user, requests, createDialogIsOpen, closeCreateDialog, doReload, setAlertMessage } = useContext(AppContext);
   const [name, setName] = useState<string>("");
   const [location, setLocation] = useState<string>("");
   const [startTime, setStartTime] = useState<Dayjs | null>(dayjs(new Date()));
@@ -61,7 +57,32 @@ export const CreateCompetitionDialog: FC = () => {
     );
   };
 
-  const createRequest = () => {
+  const createRequest = useCallback(() => {
+    if (name.trim() === "") {
+      setAlertMessage("Name is required!");
+      return;
+    }
+
+    if (location.trim() === "") {
+      setAlertMessage("Location is required!");
+      return;
+    }
+
+    if (!startTime || startTime < dayjs(Date())) {
+      setAlertMessage("The chosen start time passed!");
+      return;
+    }
+
+    if (gameFormat === undefined) {
+      setAlertMessage("Choose a game format!");
+      return;
+    }
+
+    if (competitionType === undefined) {
+      setAlertMessage("Choose the type of the competition!");
+      return;
+    }
+
     const data = {
       name,
       location,
@@ -79,7 +100,7 @@ export const CreateCompetitionDialog: FC = () => {
     competitionType === CompetitionType.ONE_VS_ALL
       ? requests.createOneVsAllCompetitionRequest({ requestBody: data }, callback)
       : requests.createTournamentCompetitionRequest({ requestBody: data }, callback);
-  };
+  }, [name, location, startTime, gameFormat, breakInMinutes, competitionType]);
 
   return (
     <DialogBase

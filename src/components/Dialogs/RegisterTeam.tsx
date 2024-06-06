@@ -1,9 +1,9 @@
 import { Autocomplete, TextField } from "@mui/material/";
-import { FC, useContext, useEffect, useState } from "react";
-import { TeamDisplayDTO } from "../../utils/Types";
+import { FC, useCallback, useContext, useEffect, useState } from "react";
 import { AppContext } from "../App/App";
 import { DialogBase } from "./DialogBase";
 import { UserRole } from "../../utils/UserRoles";
+import { CompetitionDisplayDTO } from "../../utils/Types";
 
 interface RegisterTeamDialogProps {
   dialogIsOpen: boolean;
@@ -17,37 +17,39 @@ export const RegisterTeamDialog: FC<RegisterTeamDialogProps> = ({
   closeDialog,
 }: RegisterTeamDialogProps) => {
   const { user, requests, doReload } = useContext(AppContext);
-  const [team, setTeam] = useState<TeamDisplayDTO>();
-  const [teams, setTeams] = useState<TeamDisplayDTO[]>([]);
+  const [teams, setTeams] = useState<CompetitionDisplayDTO[]>([]);
+  const [teamId, setTeamId] = useState<string>();
 
   useEffect(() => {
     if (user?.role !== UserRole.Administrator) return;
     getTeamsThatCanBeAddedToCompetition();
   }, []);
 
-  const resetForm = () => {
-    setTeam(undefined);
-  };
+  const resetForm = () => setTeamId(undefined);
 
-  const getTeamsThatCanBeAddedToCompetition = () =>
-    requests.GetTeamsThatCanBeAddedToCompetitionRequest({ id }, (response: string) =>
-      setTeams(JSON.parse(response).items)
-    );
+  const getTeamsThatCanBeAddedToCompetition = useCallback(
+    () =>
+      requests.GetTeamsThatCanBeAddedToCompetitionRequest({ id }, (response: string) =>
+        setTeams(JSON.parse(response).items)
+      ),
+    [id]
+  );
 
-  const registerRequest = () => {
-    if (!team) return;
-    requests.registerCompetitorToCompetitionAdminRequest({ id, auxId: team.id }, (_: string) => {
-      doReload();
-      closeDialog();
-      resetForm();
-    });
-  };
+  const registerTeamRequest = useCallback(
+    () =>
+      requests.registerCompetitorToCompetitionAdminRequest({ id, auxId: teamId }, (_: string) => {
+        doReload();
+        closeDialog();
+        resetForm();
+      }),
+    [id, teamId]
+  );
 
   return (
     <DialogBase
       title={"Register team"}
       open={dialogIsOpen}
-      doAction={{ name: "Register", handle: registerRequest }}
+      doAction={{ name: "Register", handle: registerTeamRequest }}
       handleClose={() => {
         closeDialog();
         resetForm();
@@ -59,7 +61,7 @@ export const RegisterTeamDialog: FC<RegisterTeamDialogProps> = ({
         options={teams}
         getOptionLabel={(team) => team.name}
         filterOptions={(x) => x}
-        onChange={(_, value) => setTeam(value ?? undefined)}
+        onChange={(_, value) => setTeamId(value?.id)}
         renderInput={(params) => (
           <TextField
             {...params}

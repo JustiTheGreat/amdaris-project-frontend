@@ -1,15 +1,12 @@
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 import SearchIcon from "@mui/icons-material/Search";
 import { Box, IconButton, TextField, Toolbar, Tooltip, Typography } from "@mui/material";
-import { alpha } from "@mui/material/styles";
-import { GridDeleteIcon } from "@mui/x-data-grid";
 import { FC, useContext } from "react";
-import { AppContext } from "../../App/App";
 import { UserRole } from "../../../utils/UserRoles";
+import { AppContext } from "../../App/App";
 
 interface TableViewToolbarProps {
   tableName: string;
-  selectedItemsCount: number;
   searchMessage: string;
   setFilterValue: (value: string) => void;
   createDialog: JSX.Element | undefined;
@@ -19,7 +16,6 @@ interface TableViewToolbarProps {
 
 export const TableViewToolbar: FC<TableViewToolbarProps> = ({
   tableName,
-  selectedItemsCount,
   searchMessage,
   setFilterValue,
   createDialog,
@@ -29,40 +25,22 @@ export const TableViewToolbar: FC<TableViewToolbarProps> = ({
   const { user, openCreateDialog } = useContext(AppContext);
 
   return (
-    <Toolbar
-      sx={{
-        pl: { sm: 2 },
-        pr: { xs: 1, sm: 1 },
-        ...(selectedItemsCount > 0 && {
-          bgcolor: (theme) => alpha(theme.palette.primary.main, theme.palette.action.activatedOpacity),
-        }),
-      }}
-    >
+    <Toolbar>
       <Typography
-        variant="h6"
-        sx={{ flex: "1 1 100%" }}
+        variant="h5"
+        sx={{ flex: 1 }}
       >
         {tableName}
       </Typography>
-      {/* {selectedItemsCount === 0 ? (
-        <Typography
-          variant="h6"
-          sx={{ flex: "1 1 100%" }}
-        >
-          {tableName}
-        </Typography>
-      ) : (
-        <Typography sx={{ flex: "1 1 100%" }}>{selectedItemsCount} selected</Typography>
-      )} */}
       {actions}
-      {user && user.role === UserRole.Administrator && !dense && selectedItemsCount === 0 && (
+      {user?.role === UserRole.Administrator && !dense && (
         <Tooltip title="Add new">
           <IconButton onClick={openCreateDialog}>
             <AddCircleOutlineIcon />
           </IconButton>
         </Tooltip>
       )}
-      {!dense && selectedItemsCount === 0 && (
+      {!dense && (
         <TextField
           type="search"
           variant="standard"
@@ -76,13 +54,6 @@ export const TableViewToolbar: FC<TableViewToolbarProps> = ({
           onChange={(event) => setFilterValue(event.currentTarget.value)}
         />
       )}
-      {/* {selectedItemsCount !== 0 && (
-        <Tooltip title="Delete">
-          <IconButton>
-            <GridDeleteIcon />
-          </IconButton>
-        </Tooltip>
-      )} */}
       {createDialog}
     </Toolbar>
   );

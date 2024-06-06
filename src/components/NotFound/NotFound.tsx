@@ -1,7 +1,10 @@
 import { Box, Typography } from "@mui/material";
 import { FC } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { authenticationPath } from "../../utils/PageConstants";
 
 export const NotFound: FC = () => {
+  const navigate = useNavigate();
   return (
     <Box
       sx={{
@@ -13,7 +16,13 @@ export const NotFound: FC = () => {
       }}
     >
       <Typography variant="h1">404</Typography>
-      <Typography>PAGE NOT FOUND</Typography>
+      <Typography fontSize={"large"}>PAGE NOT FOUND</Typography>
+      <Link
+        to={authenticationPath}
+        style={{ fontSize: "small" }}
+      >
+        Authenticate here!
+      </Link>
     </Box>
   );
 };
