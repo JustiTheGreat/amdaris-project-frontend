@@ -1,4 +1,4 @@
-import { TextField } from "@mui/material/";
+import { TextField } from "@mui/material";
 import { FC, useCallback, useContext, useState } from "react";
 import { AppContext } from "../App/App";
 import { DialogBase } from "./DialogBase";
@@ -17,7 +17,7 @@ export const CreatePlayerDialog: FC = () => {
 
     const data = { name };
 
-    requests.createPlayerRequest({ requestBody: data }, (_: string) => {
+    requests.createPlayerRequest({ requestBody: data }, (_: any) => {
       doReload();
       closeCreateDialog();
       resetForm();

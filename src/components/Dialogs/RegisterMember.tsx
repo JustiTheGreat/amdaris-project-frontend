@@ -1,4 +1,4 @@
-import { Autocomplete, TextField } from "@mui/material/";
+import { Autocomplete, TextField } from "@mui/material";
 import { FC, useCallback, useContext, useEffect, useState } from "react";
 import { AppContext } from "../App/App";
 import { DialogBase } from "./DialogBase";
@@ -28,13 +28,13 @@ export const RegisterMemberDialog: FC<RegisterMemberDialogProps> = ({
   const resetForm = () => setPlayerId(undefined);
 
   const getPlayersNotInTeam = useCallback(
-    () => requests.getPlayersNotInTeamRequest({ id }, (response: string) => setPlayers(JSON.parse(response).items)),
+    () => requests.getPlayersNotInTeamRequest({ id }, (data: any) => setPlayers(data.items)),
     [id]
   );
 
   const addPlayerToTeam = useCallback(
     () =>
-      requests.addPlayerToTeamAdminRequest({ id, auxId: playerId }, (_: string) => {
+      requests.addPlayerToTeamAdminRequest({ id, auxId: playerId }, (_: any) => {
         doReload();
         closeDialog();
         resetForm();

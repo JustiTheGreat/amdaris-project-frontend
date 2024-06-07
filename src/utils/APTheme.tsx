@@ -1,7 +1,7 @@
 import { alpha, createTheme } from "@mui/material";
 import "../index.css";
 
-declare module "@mui/material/styles/createPalette" {
+declare module "@mui/materialstyles/createPalette" {
   interface Palette {
     page: {
       backgroundColor: Palette["primary"];
@@ -70,7 +70,17 @@ export default createTheme({
     },
   },
   components: {
-    MuiButton: { defaultProps: { variant: "contained" } },
+    MuiButton: {
+      defaultProps: { variant: "contained" },
+      styleOverrides: {
+        root: {
+          "&:hover": {
+            color: definedColors.primary.main,
+            backgroundColor: alpha(definedColors.focus.main, definedColors.focus.hoverOpacity),
+          },
+        },
+      },
+    },
     MuiTextField: { defaultProps: { variant: "outlined" } },
     MuiTab: {
       styleOverrides: {
@@ -139,7 +149,7 @@ export default createTheme({
           "&:hover": {
             backgroundColor: alpha(definedColors.focus.main, definedColors.focus.hoverOpacity),
           },
-          "&.Mui-selected :hover": {
+          "&.Mui-selected:hover": {
             backgroundColor: alpha(definedColors.focus.main, definedColors.focus.activatedOpacity),
           },
         },

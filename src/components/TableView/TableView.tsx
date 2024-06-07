@@ -1,13 +1,4 @@
-import {
-  Box,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TablePagination,
-  TableRow,
-  Typography,
-} from "@mui/material/";
+import { Box, Table, TableBody, TableCell, TableContainer, TablePagination, TableRow, Typography } from "@mui/material";
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { APRequest } from "../../utils/PageConstants";
@@ -48,13 +39,16 @@ export const TableView = <T extends IdDTO>({
   const { user, pageSize, setPageSize, reload } = useContext(AppContext);
   const [items, setItems] = useState<T[]>(staticItems ?? []);
   const [sortDirection, setSortDirection] = useState<SortDirection>(SortDirection.ASCENDING);
-  const [sortKey, setSortKey] = useState<keyof T>(tableProperties.defaultSortKey);
+  const [sortKey, setSortKey] = useState<keyof T | "">(tableProperties.defaultSortKey);
   const [pageNumber, setPageNumber] = useState<number>(0);
   const [totalItems, setTotalItems] = useState<number>(0);
   const [filterValue, setFilterValue] = useState<string>("");
   const shouldRequestData = useMemo(() => staticItems, [items]);
 
   useEffect(() => getItems(), [user]);
+
+  // TODO: Remove this, table should only display data and not make requests at all
+  useEffect(() => setItems(staticItems ?? []), [staticItems]);
 
   useEffect(() => {
     setSortDirection(SortDirection.ASCENDING);
@@ -92,12 +86,11 @@ export const TableView = <T extends IdDTO>({
         requestBody: getItemsRequest.paginated ? paginatedRequest : undefined,
         id: getItemsRequest.id,
       },
-      (response) => {
+      (data: any) => {
         if (getItemsRequest.paginated) {
-          const { items, total } = JSON.parse(response);
-          setItems(items);
-          setTotalItems(total);
-        } else setItems(JSON.parse(response));
+          setItems(data.items);
+          setTotalItems(data.total);
+        } else setItems(data);
       }
     );
   };

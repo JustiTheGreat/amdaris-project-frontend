@@ -8,7 +8,7 @@ import {
   Scoreboard as ScoreboardIcon,
 } from "@mui/icons-material";
 import { Box, Button, IconButton, Tooltip, Typography } from "@mui/material";
-import { FC, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { FC, useContext, useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 import { competitorPath, matchPath } from "../../utils/PageConstants";
 import {
@@ -50,44 +50,29 @@ export const CompetitionPage: FC = () => {
 
   useEffect(() => {
     getModel();
-    getWinners();
   }, []);
 
   useEffect(() => {
-    getWinners();
+    if (competition && competition.status === CompetitionStatus.FINISHED)
+      requests.getCompetitionWinnersRequest({ id }, (data: any) => setWinners(data));
   }, [competition]);
 
-  const getModel = () =>
-    requests.getCompetitionRequest({ id }, (response: string) => setCompetition(JSON.parse(response)));
-
-  const getWinners = useCallback(
-    () =>
-      competition?.status === CompetitionStatus.FINISHED &&
-      requests.getCompetitionWinnersRequest({ id }, (response: string) => setWinners(JSON.parse(response))),
-    [id]
-  );
+  const getModel = () => requests.getCompetitionRequest({ id }, (data: any) => setCompetition(data));
 
   const stopRegistrationsRequest = () =>
-    requests.stopCompetitionRegistrationsRequest({ id }, (response: string) => setCompetition(JSON.parse(response)));
+    requests.stopCompetitionRegistrationsRequest({ id }, (data: any) => setCompetition(data));
 
-  const startRequest = () =>
-    requests.startCompetitionRequest({ id }, (response: string) => setCompetition(JSON.parse(response)));
+  const startRequest = () => requests.startCompetitionRequest({ id }, (data: any) => setCompetition(data));
 
-  const endRequest = () =>
-    requests.endCompetitionRequest({ id }, (response: string) => setCompetition(JSON.parse(response)));
+  const endRequest = () => requests.endCompetitionRequest({ id }, (data: any) => setCompetition(data));
 
-  const cancelRequest = () =>
-    requests.cancelCompetitionRequest({ id }, (response: string) => setCompetition(JSON.parse(response)));
+  const cancelRequest = () => requests.cancelCompetitionRequest({ id }, (data: any) => setCompetition(data));
 
   const registerCompetitorToCompetitionUser = () =>
-    requests.registerCompetitorToCompetitionUserRequest({ id }, (response: string) =>
-      setCompetition(JSON.parse(response))
-    );
+    requests.registerCompetitorToCompetitionUserRequest({ id }, (data: any) => setCompetition(data));
 
   const removeCompetitorFromCompetitionUser = () =>
-    requests.removeCompetitorFromCompetitionUserRequest({ id }, (response: string) =>
-      setCompetition(JSON.parse(response))
-    );
+    requests.removeCompetitorFromCompetitionUserRequest({ id }, (data: any) => setCompetition(data));
 
   const normalUserCanRegister = useMemo<boolean>(() => {
     if (!competition || !user || !isUser) return false;
@@ -110,8 +95,8 @@ export const CompetitionPage: FC = () => {
       <IconButton
         onClick={(event) => {
           event.stopPropagation();
-          requests.removeCompetitorFromCompetitionAdminRequest({ id, auxId: row.id }, (response: string) =>
-            setCompetition(JSON.parse(response))
+          requests.removeCompetitorFromCompetitionAdminRequest({ id, auxId: row.id }, (data: any) =>
+            setCompetition(data)
           );
         }}
       >
@@ -155,39 +140,54 @@ export const CompetitionPage: FC = () => {
               (isAdmin &&
                 competition.status !== CompetitionStatus.FINISHED &&
                 competition.status !== CompetitionStatus.CANCELED)) && (
-              <>
-                {isUser && competition.status === CompetitionStatus.ORGANIZING && (
-                  <Button
-                    disabled={!normalUserCanRegister}
-                    onClick={registerCompetitorToCompetitionUser}
-                  >
-                    Register
-                  </Button>
-                )}
-                {isUser && competition.status === CompetitionStatus.ORGANIZING && (
-                  <Button
-                    disabled={normalUserCanRegister}
-                    onClick={removeCompetitorFromCompetitionUser}
-                  >
-                    {"Abandon"}
-                  </Button>
-                )}
-                {(isAdmin && competition.status) === CompetitionStatus.ORGANIZING && (
-                  <Button onClick={stopRegistrationsRequest}>Stop competition registrations</Button>
-                )}
-                {(isAdmin && competition.status) === CompetitionStatus.NOT_STARTED && (
-                  <Button onClick={startRequest}>Start competition</Button>
-                )}
-                {(isAdmin && competition.status) === CompetitionStatus.STARTED && (
-                  <Button onClick={endRequest}>End competition</Button>
-                )}
-                {isAdmin &&
-                  (competition.status === CompetitionStatus.ORGANIZING ||
-                    competition.status === CompetitionStatus.NOT_STARTED ||
-                    competition.status === CompetitionStatus.STARTED) && (
-                    <Button onClick={cancelRequest}>Cancel competition</Button>
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <Box
+                  sx={{
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "stretch",
+                    gap: (theme) => theme.spacing(2),
+                  }}
+                >
+                  {isUser && competition.status === CompetitionStatus.ORGANIZING && (
+                    <Button
+                      disabled={!normalUserCanRegister}
+                      onClick={registerCompetitorToCompetitionUser}
+                    >
+                      Register to competition
+                    </Button>
                   )}
-              </>
+                  {isUser && competition.status === CompetitionStatus.ORGANIZING && (
+                    <Button
+                      disabled={normalUserCanRegister}
+                      onClick={removeCompetitorFromCompetitionUser}
+                    >
+                      Leave competition
+                    </Button>
+                  )}
+                  {(isAdmin && competition.status) === CompetitionStatus.ORGANIZING && (
+                    <Button onClick={stopRegistrationsRequest}>Stop competition registrations</Button>
+                  )}
+                  {(isAdmin && competition.status) === CompetitionStatus.NOT_STARTED && (
+                    <Button onClick={startRequest}>Start competition</Button>
+                  )}
+                  {(isAdmin && competition.status) === CompetitionStatus.STARTED && (
+                    <Button onClick={endRequest}>End competition</Button>
+                  )}
+                  {isAdmin &&
+                    (competition.status === CompetitionStatus.ORGANIZING ||
+                      competition.status === CompetitionStatus.NOT_STARTED ||
+                      competition.status === CompetitionStatus.STARTED) && (
+                      <Button onClick={cancelRequest}>Cancel competition</Button>
+                    )}
+                </Box>
+              </Box>
             ),
           },
           {

@@ -1,4 +1,4 @@
-import { Alert, Box, Container, Snackbar, useTheme } from "@mui/material/";
+import { Alert, Box, Container, Snackbar } from "@mui/material";
 import { FC, createContext, useEffect, useMemo, useState } from "react";
 import { Route, Routes, useLocation } from "react-router-dom";
 import {
@@ -30,7 +30,6 @@ import { MatchPage } from "../ModelPages/MatchPage";
 import { NavigationBar } from "../NavigationBar/NavigationBar";
 import { NotFound } from "../NotFound/NotFound";
 import { NewPageContentContainer } from "../PageContentContainer/NewPageContentContainer";
-import { PageContentContainer } from "../PageContentContainer/PageContentContainer";
 import { TableView } from "../TableView/TableView";
 import { UnauthorizedContainer } from "../UnauthorizedContainer/UnauthorizedContainer";
 
@@ -59,7 +58,6 @@ export const AppContext = createContext({ token: undefined } as AppContextType);
 export type PageSize = 5 | 10;
 
 export const App: FC = () => {
-  const theme = useTheme();
   const location = useLocation();
   const [token, setToken] = useState<string | undefined>(undefined);
   const [pageSize, setPageSize] = useState<5 | 10>(5);
@@ -70,10 +68,10 @@ export const App: FC = () => {
 
   const requests = useRequests(token, setAlertMessage);
 
-  const authenticated = useMemo<boolean>(() => {
-    console.log(location.pathname);
-    return location.pathname !== authenticationPath && token !== undefined;
-  }, [location.pathname]);
+  const authenticated = useMemo<boolean>(
+    () => location.pathname !== authenticationPath && token !== undefined,
+    [location.pathname]
+  );
 
   const unauthorizedAccess = useMemo(
     () => !authenticated && location.pathname !== authenticationPath,
@@ -108,7 +106,7 @@ export const App: FC = () => {
     >
       <Box
         sx={{
-          backgroundColor: theme.palette.secondary.main,
+          backgroundColor: "secondary.main",
           minHeight: "100vh",
           display: "flex",
           flexDirection: "column",
@@ -116,7 +114,7 @@ export const App: FC = () => {
       >
         <Container
           sx={{
-            flex: "1",
+            flex: 1,
             display: "flex",
             flexDirection: "column",
             justifyContent: authenticated ? "undefined" : "center",
@@ -128,14 +126,7 @@ export const App: FC = () => {
           <Routes>
             <Route
               path={authenticationPath}
-              element={
-                <PageContentContainer
-                  width={"30rem"}
-                  height={"30rem"}
-                >
-                  <Authentication />
-                </PageContentContainer>
-              }
+              element={<Authentication />}
             />
 
             <Route element={<UnauthorizedContainer unauthorizedAccess={unauthorizedAccess} />}>
@@ -226,7 +217,6 @@ export const App: FC = () => {
           </Routes>
           <Snackbar
             open={Boolean(alertMesssage)}
-            autoHideDuration={10000}
             onClose={() => setAlertMessage(undefined)}
             onClick={() => setAlertMessage(undefined)}
           >

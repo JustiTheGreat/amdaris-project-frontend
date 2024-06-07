@@ -6,7 +6,7 @@ import { ModelKey, navigateOnKey } from "../../../utils/data";
 
 interface TableViewHeadProps<T extends IdDTO> {
   keysOfT: ModelKey<T>[];
-  sortKey: keyof T;
+  sortKey: keyof T | "";
   sortDirection: SortDirection;
   handleSort: (property: keyof T) => void;
   dense: boolean;

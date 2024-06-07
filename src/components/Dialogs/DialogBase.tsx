@@ -1,4 +1,4 @@
-import { Button, Dialog, DialogActions, DialogContent, DialogTitle } from "@mui/material";
+import { Box, Button, Dialog, DialogActions, DialogContent, DialogTitle } from "@mui/material";
 import { FC, ReactNode } from "react";
 
 interface DialogBaseProps {
@@ -19,15 +19,18 @@ export const DialogBase: FC<DialogBaseProps> = ({ title, doAction, open, handleC
       onClose={handleClose}
     >
       <DialogTitle>{title}</DialogTitle>
-      <DialogContent
-        sx={{
-          display: "flex",
-          flexDirection: "column",
-          rowGap: "1rem",
-          width: "30rem",
-        }}
-      >
-        {children}
+      <DialogContent>
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            gap: (theme) => theme.spacing(2),
+            width: "30rem",
+            padding: (theme) => theme.spacing(2, 4, 4, 4),
+          }}
+        >
+          {children}
+        </Box>
       </DialogContent>
       <DialogActions>
         <Button

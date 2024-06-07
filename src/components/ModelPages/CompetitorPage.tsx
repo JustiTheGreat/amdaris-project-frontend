@@ -11,7 +11,7 @@ import DoDisturbIcon from "@mui/icons-material/DoDisturb";
 import { Box, Button, IconButton, Tooltip, Typography } from "@mui/material";
 import { GridDeleteIcon } from "@mui/x-data-grid";
 import { FC, useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useLocation, useParams } from "react-router-dom";
 import { competitionPath, competitorPath, matchPath } from "../../utils/PageConstants";
 import {
   CompetitionDisplayDTO,
@@ -27,6 +27,8 @@ import {
   CompetitionKeysProperties,
   MatchKeysProperties,
   PlayerKeysProperties,
+  SpecialTeamPlayer,
+  SpecialTeamPlayerKeysProperties,
   TeamKeysProperties,
 } from "../../utils/data";
 import { AppContext } from "../App/App";
@@ -35,6 +37,7 @@ import { NewPageContentContainer, TabInfo } from "../PageContentContainer/NewPag
 import { TableView } from "../TableView/TableView";
 
 export const CompetitorPage: FC = () => {
+  const location = useLocation();
   const { user, requests } = useContext(AppContext);
   const [competitor, setCompetitor] = useState<CompetitorGetDTO>();
   const { id } = useParams();
@@ -53,35 +56,32 @@ export const CompetitorPage: FC = () => {
 
   useEffect(() => {
     getModel();
-  }, []);
+  }, [location.pathname]);
 
-  const getModel = useCallback(
-    () => requests.getCompetitorRequest({ id }, (response: string) => setCompetitor(JSON.parse(response))),
-    [id]
-  );
+  const getModel = useCallback(() => requests.getCompetitorRequest({ id }, (data: any) => setCompetitor(data)), [id]);
 
   const registerPlayerToTeamUser = useCallback(
-    () => requests.addPlayerToTeamUserRequest({ id }, (_: string) => getModel()),
+    () => requests.addPlayerToTeamUserRequest({ id }, (_: any) => getModel()),
     [id]
   );
 
   const changeTeamPlayerStatusUser = useCallback(
-    () => requests.changeTeamPlayerStatusUserRequest({ id }, (_: string) => getModel()),
+    () => requests.changeTeamPlayerStatusUserRequest({ id }, (_: any) => getModel()),
     [id]
   );
 
   const removePlayerFromTeamUser = useCallback(
-    () => requests.removePlayerFromTeamUserRequest({ id }, (_: string) => getModel()),
+    () => requests.removePlayerFromTeamUserRequest({ id }, (_: any) => getModel()),
     [id]
   );
 
   const changeTeamPlayerStatusAdmin = useCallback(
-    (auxId: string) => requests.changeTeamPlayerStatusAdminRequest({ id, auxId }, (_: string) => getModel()),
+    (auxId: string) => requests.changeTeamPlayerStatusAdminRequest({ id, auxId }, (_: any) => getModel()),
     [id]
   );
 
   const removePlayerFromTeamAdmin = useCallback(
-    (auxId: string) => requests.removePlayerFromTeamAdminRequest({ id, auxId }, (_: string) => getModel()),
+    (auxId: string) => requests.removePlayerFromTeamAdminRequest({ id, auxId }, (_: any) => getModel()),
     [id]
   );
 
@@ -93,7 +93,7 @@ export const CompetitorPage: FC = () => {
     </Tooltip>,
   ];
 
-  const getPlayerActions = (row: CompetitorDisplayDTO): JSX.Element[] => [
+  const getPlayerActions = (row: SpecialTeamPlayer): JSX.Element[] => [
     <Tooltip title={"Change status"}>
       <IconButton
         onClick={(event) => {
@@ -101,8 +101,11 @@ export const CompetitorPage: FC = () => {
           changeTeamPlayerStatusAdmin(row.id);
         }}
       >
-        <DoDisturbIcon />
-        <CheckCircleOutlineIcon />
+        {competitor?.teamPlayers.find((teamPlayer) => teamPlayer.playerId === row.id)?.isActive ? (
+          <DoDisturbIcon />
+        ) : (
+          <CheckCircleOutlineIcon />
+        )}
       </IconButton>
     </Tooltip>,
     <Tooltip title={"Remove player"}>
@@ -134,25 +137,54 @@ export const CompetitorPage: FC = () => {
         tooltip: "Actions",
         icon: <ReceiptIcon fontSize="large" />,
         content: isTeam && isUser && (
-          <Box style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
-            <Button
-              disabled={!normalUserCanRegister}
-              onClick={registerPlayerToTeamUser}
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: (theme) => theme.spacing(2),
+            }}
+          >
+            <Typography variant="h4">
+              {`You are 
+              ${
+                normalUserCanRegister
+                  ? "not registered to this team"
+                  : `registered and ${
+                      competitor.teamPlayers.find((teamPlayer) => teamPlayer.playerId === user.playerId)?.isActive
+                        ? "active"
+                        : "inactive"
+                    }`
+              }!`}
+            </Typography>
+            <Box
+              sx={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "stretch",
+                gap: (theme) => theme.spacing(2),
+              }}
             >
-              Register
-            </Button>
-            <Button
-              disabled={normalUserCanRegister}
-              onClick={changeTeamPlayerStatusUser}
-            >
-              Change status
-            </Button>
-            <Button
-              disabled={normalUserCanRegister}
-              onClick={removePlayerFromTeamUser}
-            >
-              Leave
-            </Button>
+              <Button
+                disabled={!normalUserCanRegister}
+                onClick={registerPlayerToTeamUser}
+              >
+                Register to team
+              </Button>
+              <Button
+                disabled={normalUserCanRegister}
+                onClick={changeTeamPlayerStatusUser}
+              >
+                Change activity status
+              </Button>
+              <Button
+                disabled={normalUserCanRegister}
+                onClick={removePlayerFromTeamUser}
+              >
+                Leave team
+              </Button>
+            </Box>
           </Box>
         ),
       });
@@ -181,12 +213,19 @@ export const CompetitorPage: FC = () => {
           navigateOnClick={{ navigationBaseRoute: competitorPath }}
         />
       ) : (
-        <TableView<CompetitorDisplayDTO>
+        <TableView<SpecialTeamPlayer>
           tableName={"Players"}
-          tableProperties={PlayerKeysProperties}
+          tableProperties={SpecialTeamPlayerKeysProperties}
           deletableEntries
           dense
-          staticItems={(competitor as any as TeamGetDTO).players}
+          staticItems={(competitor as any as TeamGetDTO).players.map((player) => {
+            return {
+              ...player,
+              isActive: competitor.teamPlayers
+                .find((teamPlayer) => teamPlayer.playerId === player.id)
+                ?.isActive.toString(),
+            } as SpecialTeamPlayer;
+          })}
           navigateOnClick={{ navigationBaseRoute: competitorPath }}
           getTableActions={isAdmin ? getPlayerActions : undefined}
           toolbarActions={isAdmin ? playerToolbarActions : undefined}

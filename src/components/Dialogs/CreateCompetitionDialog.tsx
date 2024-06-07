@@ -1,4 +1,4 @@
-import { Autocomplete, MenuItem, TextField } from "@mui/material/";
+import { Autocomplete, MenuItem, TextField } from "@mui/material";
 import { DateTimePicker } from "@mui/x-date-pickers";
 import dayjs, { Dayjs } from "dayjs";
 import { FC, useCallback, useContext, useEffect, useState } from "react";
@@ -52,9 +52,7 @@ export const CreateCompetitionDialog: FC = () => {
       },
     };
 
-    requests.getGameFormatsRequest({ requestBody: paginatedRequest }, (response: string) =>
-      setGameFormatList(JSON.parse(response).items)
-    );
+    requests.getGameFormatsRequest({ requestBody: paginatedRequest }, (data: any) => setGameFormatList(data.items));
   };
 
   const createRequest = useCallback(() => {
@@ -91,7 +89,7 @@ export const CreateCompetitionDialog: FC = () => {
       breakInMinutes,
     };
 
-    const callback = (_: string) => {
+    const callback = (_: any) => {
       doReload();
       closeCreateDialog();
       resetForm();

@@ -1,4 +1,4 @@
-import { Autocomplete, TextField } from "@mui/material/";
+import { Autocomplete, TextField } from "@mui/material";
 import { FC, useCallback, useContext, useEffect, useState } from "react";
 import { AppContext } from "../App/App";
 import { DialogBase } from "./DialogBase";
@@ -28,14 +28,13 @@ export const RegisterPlayerDialog: FC<RegisterPlayerDialogProps> = ({
   const resetForm = () => setPlayerId(undefined);
 
   const getPlayersNotInCompetition = useCallback(
-    () =>
-      requests.getPlayersNotInCompetitionRequest({ id }, (response: string) => setPlayers(JSON.parse(response).items)),
+    () => requests.getPlayersNotInCompetitionRequest({ id }, (data: any) => setPlayers(data.items)),
     [id]
   );
 
   const registerPlayerRequest = useCallback(
     () =>
-      requests.registerCompetitorToCompetitionAdminRequest({ id, auxId: playerId }, (_: string) => {
+      requests.registerCompetitorToCompetitionAdminRequest({ id, auxId: playerId }, (_: any) => {
         doReload();
         closeDialog();
         resetForm();

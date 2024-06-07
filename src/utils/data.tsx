@@ -16,8 +16,8 @@ export interface ModelKey<T extends IdDTO> {
 
 export interface KeysProperties<T extends IdDTO> {
   keys: ModelKey<T>[];
-  filterKey: keyof T;
-  defaultSortKey: keyof T;
+  filterKey: keyof T | "";
+  defaultSortKey: keyof T | "";
 }
 
 export const navigateOnKey = (key: ModelKey<any>): any => key.name;
@@ -75,11 +75,11 @@ export const MatchKeysProperties: KeysProperties<MatchDisplayDTO> = {
 
 export const PointKeysProperties: KeysProperties<PointDisplayDTO> = {
   keys: [
-    { name: "value", sortable: false },
     { name: "player", sortable: false },
+    { name: "value", sortable: false },
   ],
-  filterKey: "id",
-  defaultSortKey: "id",
+  filterKey: "",
+  defaultSortKey: "",
 };
 
 export const GameFormatKeysProperties: KeysProperties<GameFormatGetDTO> = {
@@ -101,6 +101,26 @@ export const RankingItemKeysProperties: KeysProperties<RankingItemDTO> = {
     { name: "wins", sortable: false },
     { name: "points", sortable: false },
   ],
-  filterKey: "id",
-  defaultSortKey: "id",
+  filterKey: "",
+  defaultSortKey: "",
+};
+
+export interface SpecialTeamPlayer extends IdDTO {
+  name: string;
+  numberOfCompetitions: number;
+  numberOfMatches: number;
+  numberOfTeams?: number;
+  isActive: string;
+}
+
+export const SpecialTeamPlayerKeysProperties: KeysProperties<SpecialTeamPlayer> = {
+  keys: [
+    { name: "name", sortable: false },
+    { name: "numberOfCompetitions", sortable: false },
+    { name: "numberOfMatches", sortable: false },
+    { name: "numberOfTeams", sortable: false },
+    { name: "isActive", sortable: false },
+  ],
+  filterKey: "",
+  defaultSortKey: "",
 };

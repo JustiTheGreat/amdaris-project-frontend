@@ -1,5 +1,5 @@
-import { Box, Tab, Tabs, Tooltip, useTheme } from "@mui/material";
-import { FC, createRef, useMemo, useState } from "react";
+import { Box, Tab, Tabs, Tooltip } from "@mui/material";
+import { FC, useMemo, useRef, useState } from "react";
 import { useRefDimensions } from "../../utils/UseRefDimensions";
 
 export interface TabInfo {
@@ -19,8 +19,8 @@ export const NewPageContentContainer: FC<NewPageContentContainerProps> = ({
   tabInfoList = [],
   children,
 }: NewPageContentContainerProps) => {
-  const theme = useTheme();
-  const slidingContentContainerRef = createRef();
+  const slidingContentContainerRef = useRef<Element>();
+
   const dimensions = useRefDimensions(slidingContentContainerRef);
 
   const isActive = (ti: TabInfo) => ti.content !== undefined && ti.content !== false;
@@ -32,21 +32,21 @@ export const NewPageContentContainer: FC<NewPageContentContainerProps> = ({
       sx={{
         width: { width },
         flex: !width ? 1 : undefined,
-        borderRadius: "2rem",
-        boxShadow: "20",
+        borderRadius: 10,
+        boxShadow: 20,
         display: "flex",
       }}
     >
       <Box
         sx={{
           overflow: "hidden",
-          backgroundColor: `${theme.palette.primary.main}`,
-          borderTopLeftRadius: "2rem",
-          borderBottomLeftRadius: "2rem",
+          backgroundColor: "primary.main",
+          borderTopLeftRadius: 10,
+          borderBottomLeftRadius: 10,
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
-          color: `${theme.palette.primary.contrastText}`,
+          color: "primary.contrastText",
           width: "5rem",
         }}
       >
@@ -74,7 +74,7 @@ export const NewPageContentContainer: FC<NewPageContentContainerProps> = ({
                       {ti.icon}
                     </Tooltip>
                   }
-                  sx={{ paddingTop: "2rem", paddingBottom: "2rem" }}
+                  sx={(theme) => ({ padding: theme.spacing(4, 0, 4, 0) })}
                 />
               ))}
           </Tabs>
@@ -84,10 +84,10 @@ export const NewPageContentContainer: FC<NewPageContentContainerProps> = ({
         ref={slidingContentContainerRef}
         sx={{
           flex: 1,
-          backgroundColor: theme.palette.primary.light,
-          padding: "1rem",
-          borderTopRightRadius: "2rem",
-          borderBottomRightRadius: "2rem",
+          backgroundColor: "primary.light",
+          padding: (theme) => theme.spacing(2),
+          borderTopRightRadius: 10,
+          borderBottomRightRadius: 10,
           display: "flex",
           alignItems: "stretch",
           overflow: "hidden",
@@ -98,10 +98,10 @@ export const NewPageContentContainer: FC<NewPageContentContainerProps> = ({
           children
         ) : (
           <Box
-            style={{
+            sx={{
               flex: 1,
               display: "flex",
-              gap: "2rem",
+              gap: (theme) => theme.spacing(2),
               flexWrap: "nowrap",
               transition: "transform ease-out 0.5s",
               width: activeTabInfoList.length * dimensions.width,
@@ -116,13 +116,13 @@ export const NewPageContentContainer: FC<NewPageContentContainerProps> = ({
           >
             {activeTabInfoList.map((ti) => (
               <Box
-                style={{
+                sx={{
                   flex: 1,
                   display: "flex",
                   flexDirection: "column",
                   alignItems: "stretch",
                   justifyContent: "center",
-                  width: `calc(${dimensions.width}px - 2rem)`,
+                  width: (theme) => `calc(${dimensions.width}px - ${theme.spacing(2)})`,
                 }}
               >
                 {ti.content}

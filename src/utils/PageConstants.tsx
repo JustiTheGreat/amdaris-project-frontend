@@ -47,7 +47,7 @@ export interface PaginatedRequest {
   };
 }
 
-interface APRequestData {
+export interface APRequestData {
   id?: string;
   auxId?: string;
   requestBody?: object;
@@ -74,14 +74,17 @@ export const useRequests = (token: string | undefined, setAlertMessage: (message
       mode: "cors",
     })
       .then(async (response) => {
-        const responseText: string = await response.text();
-        if (response.status === 200 || response.status === 204) callback ? callback(responseText) : undefined;
+        const data =
+          response.headers.get("Content-Type") === "application/json; charset=utf-8"
+            ? await response.json()
+            : await response.text();
+        if (response.status === 200 || response.status === 204) callback && callback(data);
         else if (response.status === 401 || response.status === 403) {
-          setAlertMessage(responseText);
+          setAlertMessage(data);
           navigate(authenticationPath);
         } else if (response.status === 409) {
-          setAlertMessage(responseText);
-        } else setAlertMessage(responseText);
+          setAlertMessage(data);
+        } else setAlertMessage(data);
       })
       .catch((error) => setAlertMessage(error.message));
   };

@@ -1,6 +1,7 @@
 import { AccountCircle } from "@mui/icons-material";
-import { Box, IconButton, Menu, MenuItem, Tab, Tabs, Toolbar, Tooltip, Typography, useTheme } from "@mui/material/";
+import { Box, IconButton, Menu, MenuItem, Tab, Tabs, Toolbar, Tooltip, Typography } from "@mui/material";
 import { FC, useContext, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   authenticationPath,
   competitionPath,
@@ -9,17 +10,15 @@ import {
   playerPath,
   teamPath,
 } from "../../utils/PageConstants";
+import { UserRole } from "../../utils/UserRoles";
 import { formatCamelCaseToReadable } from "../../utils/Utils";
 import { AppContext } from "../App/App";
-import { useNavigate } from "react-router-dom";
-import { UserRole } from "../../utils/UserRoles";
 
 type NavigationTab = typeof competitionPath | typeof playerPath | typeof teamPath | typeof gameFormatPath;
 const navigationBarTabs: NavigationTab[] = [competitionPath, playerPath, teamPath, gameFormatPath];
 const defaultNavigationTab: NavigationTab = competitionPath;
 
 export const NavigationBar: FC = () => {
-  const theme = useTheme();
   const navigate = useNavigate();
   const { user, setToken, doReload } = useContext(AppContext);
   const [navigationTab, setNavigationTab] = useState<NavigationTab>(defaultNavigationTab);
@@ -45,24 +44,24 @@ export const NavigationBar: FC = () => {
   return (
     <Toolbar
       sx={{
-        backgroundColor: theme.palette.primary.main,
-        color: theme.palette.primary.contrastText,
+        backgroundColor: "primary.main",
+        color: "primary.contrastText",
         display: "flex",
         flexDirection: "row",
         alignItems: "center",
         justifyContent: "space-between",
-        columnGap: "5rem",
+        gap: (theme) => theme.spacing(10),
         height: "4rem",
-        margin: "0 0 3rem 0",
-        borderRadius: "1rem",
+        margin: (theme) => theme.spacing(0, 0, 8, 0),
+        borderRadius: 10,
         position: "sticky",
-        top: "0",
-        zIndex: "1",
+        top: 0,
+        zIndex: 1,
       }}
     >
       <Typography
         variant="h5"
-        sx={{ color: theme.palette.primary.contrastText }}
+        sx={{ color: "primary.contrastText" }}
       >
         APProject
       </Typography>
@@ -90,7 +89,7 @@ export const NavigationBar: FC = () => {
           />
         ))}
       </Tabs>
-      <Box sx={{ flex: "1" }}></Box>
+      <Box sx={{ flex: 1 }}></Box>
       <Box>
         <Tooltip title="Open settings">
           <IconButton onClick={handleOpenUserMenu}>

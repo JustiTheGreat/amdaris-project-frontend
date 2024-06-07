@@ -1,4 +1,4 @@
-import { Autocomplete, Box, Checkbox, FormControlLabel, MenuItem, TextField } from "@mui/material/";
+import { Autocomplete, Box, Checkbox, FormControlLabel, MenuItem, TextField } from "@mui/material";
 import { FC, useCallback, useContext, useEffect, useState } from "react";
 import { PaginatedRequest } from "../../utils/PageConstants";
 import { CompetitorType, GameTypeGetDTO, SortDirection } from "../../utils/Types";
@@ -55,9 +55,7 @@ export const CreateGameFormatDialog: FC = () => {
       },
     };
 
-    requests.getGameTypesRequest({ requestBody: paginatedRequest }, (response: string) =>
-      setGameTypeList(JSON.parse(response).items)
-    );
+    requests.getGameTypesRequest({ requestBody: paginatedRequest }, (data: any) => setGameTypeList(data.items));
   };
 
   const createRequest = useCallback(() => {
@@ -95,7 +93,7 @@ export const CreateGameFormatDialog: FC = () => {
       durationInMinutes,
     };
 
-    requests.createGameFormatRequest({ requestBody: data }, (_: string) => {
+    requests.createGameFormatRequest({ requestBody: data }, (_: any) => {
       doReload();
       closeCreateDialog();
       resetForm();
@@ -156,7 +154,7 @@ export const CreateGameFormatDialog: FC = () => {
       />
       <Box sx={{ display: "flex" }}>
         <FormControlLabel
-          sx={{ flex: "1" }}
+          sx={{ flex: 1 }}
           control={
             <Checkbox
               value={Boolean(winAt)}
@@ -168,7 +166,7 @@ export const CreateGameFormatDialog: FC = () => {
           label={"Win match at score"}
         />
         <TextField
-          sx={{ flex: "1" }}
+          sx={{ flex: 1 }}
           type="number"
           label={"Win match at score"}
           required
@@ -183,7 +181,7 @@ export const CreateGameFormatDialog: FC = () => {
       </Box>
       <Box sx={{ display: "flex" }}>
         <FormControlLabel
-          sx={{ flex: "1" }}
+          sx={{ flex: 1 }}
           control={
             <Checkbox
               value={Boolean(durationInMinutes)}
@@ -195,7 +193,7 @@ export const CreateGameFormatDialog: FC = () => {
           label={"Timed matches"}
         />
         <TextField
-          sx={{ flex: "1" }}
+          sx={{ flex: 1 }}
           type="number"
           label={"Match duration (min)"}
           required

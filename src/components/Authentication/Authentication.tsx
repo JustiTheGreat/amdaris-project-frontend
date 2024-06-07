@@ -8,12 +8,14 @@ import {
   ToggleButton,
   ToggleButtonGroup,
   Typography,
+  useTheme,
 } from "@mui/material";
 import { FC, useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { competitionPath } from "../../utils/PageConstants";
 import { AppContext } from "../App/App";
 import { AuthenticationFormFieldContainer } from "./AuthenticationFormFieldContainer/AuthenticationFormFieldContainer";
+import { VisibilityAnimation } from "../Animations/VisibilityAnimation";
 
 enum AuthenticationAction {
   LOGIN = "Login",
@@ -21,6 +23,7 @@ enum AuthenticationAction {
 }
 
 export const Authentication: FC = () => {
+  const theme = useTheme();
   const navigate = useNavigate();
   const { setToken, requests, setAlertMessage } = useContext(AppContext);
   const [authenticationAction, setAuthenticationAction] = useState<AuthenticationAction>(AuthenticationAction.LOGIN);
@@ -83,116 +86,153 @@ export const Authentication: FC = () => {
   const textfieldWeight = "60";
 
   return (
-    <>
-      <AuthenticationFormFieldContainer marginBottom="2rem">
-        <Typography
-          variant="h5"
-          sx={{ fontWeight: "bold" }}
-        >
-          {authenticationAction}
-        </Typography>
-        <ToggleButtonGroup
-          exclusive
-          value={authenticationAction}
-          onChange={(_, value: AuthenticationAction) => (value ? setAuthenticationAction(value) : undefined)}
-        >
-          <ToggleButton value={AuthenticationAction.LOGIN}>
-            <LockOpen fontSize="medium" />
-          </ToggleButton>
-          <ToggleButton value={AuthenticationAction.REGISTER}>
-            <AppRegistration fontSize="medium" />
-          </ToggleButton>
-        </ToggleButtonGroup>
-      </AuthenticationFormFieldContainer>
-      <AuthenticationFormFieldContainer>
-        <Typography sx={{ flex: fieldLabelWeight }}>Email address:</Typography>
-        <TextField
-          sx={{ flex: textfieldWeight }}
-          name="email"
-          label="Email address"
-          type="email"
-          required
-          defaultValue={""}
-          value={email}
-          onChange={(event) => setEmail(event.currentTarget.value)}
-        />
-      </AuthenticationFormFieldContainer>
-      <AuthenticationFormFieldContainer>
-        <Typography sx={{ flex: fieldLabelWeight }}>Password:</Typography>
-        <TextField
-          sx={{ flex: textfieldWeight }}
-          name="password"
-          label="Password"
-          type={showPassword ? "text" : "password"}
-          required
-          defaultValue={""}
-          value={password}
-          onChange={(event) => setPassword(event.currentTarget.value)}
-          InputProps={{
-            endAdornment: (
-              <InputAdornment position="end">
-                <IconButton
-                  onClick={(_) => setShowPassword(!showPassword)}
-                  edge="end"
-                >
-                  {showPassword ? <VisibilityOff /> : <Visibility />}
-                </IconButton>
-              </InputAdornment>
-            ),
-          }}
-        />
-      </AuthenticationFormFieldContainer>
-      {authenticationAction === AuthenticationAction.REGISTER && (
+    <VisibilityAnimation>
+      <Box
+        sx={(theme) => {
+          return {
+            width: "30rem",
+            height: "35rem",
+            backgroundColor: "primary.light",
+            padding: theme.spacing(3),
+            border: (theme) => `0.3rem solid ${theme.palette.primary.main}`,
+            borderRadius: 10,
+            display: "flex",
+            flexDirection: "column",
+            gap: theme.spacing(2),
+          };
+        }}
+      >
+        <AuthenticationFormFieldContainer marginBottom="2rem">
+          {authenticationAction === AuthenticationAction.LOGIN ? (
+            <VisibilityAnimation>
+              <Typography
+                variant="h5"
+                sx={{ fontWeight: "bold" }}
+              >
+                {AuthenticationAction.LOGIN}
+              </Typography>
+            </VisibilityAnimation>
+          ) : (
+            <VisibilityAnimation>
+              <Typography
+                variant="h5"
+                sx={{ fontWeight: "bold" }}
+              >
+                {AuthenticationAction.REGISTER}
+              </Typography>
+            </VisibilityAnimation>
+          )}
+          <ToggleButtonGroup
+            exclusive
+            value={authenticationAction}
+            onChange={(_, value: AuthenticationAction) => (value ? setAuthenticationAction(value) : undefined)}
+          >
+            <ToggleButton value={AuthenticationAction.LOGIN}>
+              <LockOpen fontSize="medium" />
+            </ToggleButton>
+            <ToggleButton value={AuthenticationAction.REGISTER}>
+              <AppRegistration fontSize="medium" />
+            </ToggleButton>
+          </ToggleButtonGroup>
+        </AuthenticationFormFieldContainer>
         <AuthenticationFormFieldContainer>
-          <Typography sx={{ flex: fieldLabelWeight }}>First name:</Typography>
+          <Typography sx={{ flex: fieldLabelWeight }}>Email address:</Typography>
           <TextField
             sx={{ flex: textfieldWeight }}
-            name="firstName"
-            label="First name"
+            name="email"
+            label="Email address"
+            type="email"
             required
             defaultValue={""}
-            value={firstName}
-            onChange={(event) => setFirstName(event.currentTarget.value)}
+            value={email}
+            onChange={(event) => setEmail(event.currentTarget.value)}
           />
         </AuthenticationFormFieldContainer>
-      )}
-      {authenticationAction === AuthenticationAction.REGISTER && (
         <AuthenticationFormFieldContainer>
-          <Typography sx={{ flex: fieldLabelWeight }}>Last name:</Typography>
+          <Typography sx={{ flex: fieldLabelWeight }}>Password:</Typography>
           <TextField
             sx={{ flex: textfieldWeight }}
-            name="lastName"
-            label="Last name"
+            name="password"
+            label="Password"
+            type={showPassword ? "text" : "password"}
             required
             defaultValue={""}
-            value={lastName}
-            onChange={(event) => setLastName(event.currentTarget.value)}
+            value={password}
+            onChange={(event) => setPassword(event.currentTarget.value)}
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton
+                    onClick={(_) => setShowPassword(!showPassword)}
+                    edge="end"
+                  >
+                    {showPassword ? <VisibilityOff /> : <Visibility />}
+                  </IconButton>
+                </InputAdornment>
+              ),
+            }}
           />
         </AuthenticationFormFieldContainer>
-      )}
-      {authenticationAction === AuthenticationAction.REGISTER && (
-        <AuthenticationFormFieldContainer>
-          <Typography sx={{ flex: fieldLabelWeight }}>Username:</Typography>
-          <TextField
-            sx={{ flex: textfieldWeight }}
-            name="username"
-            label="Username"
-            required
-            defaultValue={""}
-            value={username}
-            onChange={(event) => setUsername(event.currentTarget.value)}
-          />
-        </AuthenticationFormFieldContainer>
-      )}
-      <Box sx={{ flex: "1" }} />
-      <Box sx={{ display: "flex", justifyContent: "center" }}>
-        <Button
-          sx={{ width: "6rem" }}
-          onClick={(_) => onSubmit()}
-        >
-          {authenticationAction}
-        </Button>
+
+        {authenticationAction === AuthenticationAction.REGISTER && (
+          <VisibilityAnimation>
+            <AuthenticationFormFieldContainer>
+              <Typography sx={{ flex: fieldLabelWeight }}>First name:</Typography>
+              <TextField
+                sx={{ flex: textfieldWeight }}
+                name="firstName"
+                label="First name"
+                required
+                defaultValue={""}
+                value={firstName}
+                onChange={(event) => setFirstName(event.currentTarget.value)}
+              />
+            </AuthenticationFormFieldContainer>
+          </VisibilityAnimation>
+        )}
+        {authenticationAction === AuthenticationAction.REGISTER && (
+          <VisibilityAnimation>
+            <AuthenticationFormFieldContainer>
+              <Typography sx={{ flex: fieldLabelWeight }}>Last name:</Typography>
+              <TextField
+                sx={{ flex: textfieldWeight }}
+                name="lastName"
+                label="Last name"
+                required
+                defaultValue={""}
+                value={lastName}
+                onChange={(event) => setLastName(event.currentTarget.value)}
+              />
+            </AuthenticationFormFieldContainer>
+          </VisibilityAnimation>
+        )}
+        {authenticationAction === AuthenticationAction.REGISTER && (
+          <VisibilityAnimation>
+            <AuthenticationFormFieldContainer>
+              <Typography sx={{ flex: fieldLabelWeight }}>Username:</Typography>
+              <TextField
+                sx={{ flex: textfieldWeight }}
+                name="username"
+                label="Username"
+                required
+                defaultValue={""}
+                value={username}
+                onChange={(event) => setUsername(event.currentTarget.value)}
+              />
+            </AuthenticationFormFieldContainer>
+          </VisibilityAnimation>
+        )}
+
+        <Box sx={{ flex: 1 }} />
+        <Box sx={{ display: "flex", justifyContent: "center" }}>
+          <Button
+            sx={{ width: "6rem" }}
+            onClick={(_) => onSubmit()}
+          >
+            {authenticationAction}
+          </Button>
+        </Box>
       </Box>
-    </>
+    </VisibilityAnimation>
   );
 };

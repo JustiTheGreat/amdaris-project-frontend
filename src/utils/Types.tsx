@@ -34,9 +34,7 @@ export interface IdDTO {
   id: string;
 }
 
-export interface DisplayDTO extends IdDTO {}
-
-export interface CompetitionDisplayDTO extends DisplayDTO {
+export interface CompetitionDisplayDTO extends IdDTO {
   name: string;
   competitionType: CompetitionType;
   status: CompetitionStatus;
@@ -44,7 +42,7 @@ export interface CompetitionDisplayDTO extends DisplayDTO {
   competitorType: CompetitorType;
 }
 
-export interface CompetitorDisplayDTO extends DisplayDTO {
+export interface CompetitorDisplayDTO extends IdDTO {
   name: string;
   competitorType: CompetitorType;
   numberOfCompetitions: number;
@@ -54,7 +52,7 @@ export interface CompetitorDisplayDTO extends DisplayDTO {
   numberOfActivePlayers?: number;
 }
 
-export interface MatchDisplayDTO extends DisplayDTO {
+export interface MatchDisplayDTO extends IdDTO {
   status: MatchStatus;
   startTime?: Date;
   competitors: string;
@@ -63,14 +61,14 @@ export interface MatchDisplayDTO extends DisplayDTO {
   winner: string | null;
 }
 
-export interface PointDisplayDTO extends DisplayDTO {
+export interface PointDisplayDTO extends IdDTO {
   value: number;
   matchId: string;
   playerId: string;
   player: string;
 }
 
-export interface TeamPlayerDisplayDTO extends DisplayDTO {
+export interface TeamPlayerDisplayDTO extends IdDTO {
   teamId: number;
   team: string;
   playerId: string;
@@ -78,7 +76,7 @@ export interface TeamPlayerDisplayDTO extends DisplayDTO {
   isActive: boolean;
 }
 
-export interface RankingItemDTO extends DisplayDTO {
+export interface RankingItemDTO extends IdDTO {
   competitor: string;
   wins: number;
   points: number;
