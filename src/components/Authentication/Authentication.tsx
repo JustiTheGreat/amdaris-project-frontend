@@ -8,14 +8,13 @@ import {
   ToggleButton,
   ToggleButtonGroup,
   Typography,
-  useTheme,
 } from "@mui/material";
 import { FC, useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { competitionPath } from "../../utils/PageConstants";
+import { VisibilityAnimation } from "../Animations/VisibilityAnimation";
 import { AppContext } from "../App/App";
 import { AuthenticationFormFieldContainer } from "./AuthenticationFormFieldContainer/AuthenticationFormFieldContainer";
-import { VisibilityAnimation } from "../Animations/VisibilityAnimation";
 
 enum AuthenticationAction {
   LOGIN = "Login",
@@ -23,9 +22,8 @@ enum AuthenticationAction {
 }
 
 export const Authentication: FC = () => {
-  const theme = useTheme();
   const navigate = useNavigate();
-  const { setToken, requests, setAlertMessage } = useContext(AppContext);
+  const { requests, setAlertMessage } = useContext(AppContext);
   const [authenticationAction, setAuthenticationAction] = useState<AuthenticationAction>(AuthenticationAction.LOGIN);
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
@@ -35,6 +33,10 @@ export const Authentication: FC = () => {
   const [showPassword, setShowPassword] = useState<boolean>(false);
 
   useEffect(() => resetForm(), [authenticationAction]);
+
+  useEffect(() => {
+    if (localStorage.getItem("token")) navigate(competitionPath); //TODO
+  }, []);
 
   const onSubmit = () => {
     if (email.trim() === "") {
@@ -69,7 +71,7 @@ export const Authentication: FC = () => {
   };
 
   const proceed = (token: string) => {
-    setToken(token);
+    localStorage.setItem("token", token);
     navigate(competitionPath);
     resetForm();
   };

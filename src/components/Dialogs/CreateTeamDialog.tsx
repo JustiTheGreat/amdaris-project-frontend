@@ -1,10 +1,16 @@
 import { TextField } from "@mui/material";
 import { FC, useCallback, useContext, useState } from "react";
 import { AppContext } from "../App/App";
-import { DialogBase } from "./DialogBase";
+import { BaseDialogProps, DialogBase } from "./DialogBase";
 
-export const CreateTeamDialog: FC = () => {
-  const { requests, createDialogIsOpen, closeCreateDialog, doReload, setAlertMessage } = useContext(AppContext);
+interface CreateTeamDialogProps extends BaseDialogProps {}
+
+export const CreateTeamDialog: FC<CreateTeamDialogProps> = ({
+  dialogIsOpen,
+  closeDialog,
+  handleReload,
+}: CreateTeamDialogProps) => {
+  const { requests, setAlertMessage } = useContext(AppContext);
   const [name, setName] = useState<string>("");
 
   const resetForm = () => setName("");
@@ -18,8 +24,8 @@ export const CreateTeamDialog: FC = () => {
     const data = { name };
 
     requests.createTeamRequest({ requestBody: data }, (_: any) => {
-      doReload();
-      closeCreateDialog();
+      handleReload();
+      closeDialog();
       resetForm();
     });
   }, [name]);
@@ -27,10 +33,10 @@ export const CreateTeamDialog: FC = () => {
   return (
     <DialogBase
       title={"Create team"}
-      open={createDialogIsOpen}
+      open={dialogIsOpen}
       doAction={{ name: "Create", handle: createRequest }}
       handleClose={() => {
-        closeCreateDialog();
+        closeDialog();
         resetForm();
       }}
     >

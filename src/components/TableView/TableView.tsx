@@ -1,68 +1,68 @@
-import { Box, Table, TableBody, TableCell, TableContainer, TablePagination, TableRow, Typography } from "@mui/material";
-import { useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { Search as SearchIcon } from "@mui/icons-material";
+import {
+  Box,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TablePagination,
+  TableRow,
+  TextField,
+  Toolbar,
+  Typography,
+} from "@mui/material";
+import { useCallback, useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { APRequest } from "../../utils/PageConstants";
+import { APRequestData } from "../../utils/PageConstants";
 import { IdDTO, SortDirection } from "../../utils/Types";
 import { formatKeyToSpacedLowercase } from "../../utils/Utils";
 import { KeysProperties, navigateOnRowAndKey } from "../../utils/data";
 import { AppContext } from "../App/App";
 import { TableViewHead } from "./TableViewHead/TableViewHead";
-import { TableViewToolbar } from "./TableViewToolbar/TableViewToolbar";
 
 interface TableViewProps<T extends IdDTO> {
   tableName: string;
   tableProperties: KeysProperties<T>;
-  deletableEntries?: boolean;
+  staticItems: T[];
+  totalItems?: number;
+  handleReloadHandler?: (requestData: APRequestData) => void;
   dense?: boolean;
-  createDialog?: JSX.Element;
-  getItemsRequest?: { request: APRequest; paginated?: boolean; id?: string };
-  staticItems?: T[];
-  navigateOnClick?: {
-    navigationBaseRoute: string;
-  };
-  getTableActions?: (row: T) => JSX.Element[];
-  toolbarActions?: JSX.Element[];
+  navigateOnClick?: { navigationBaseRoute: string };
+  toolbarActions?: (dense: boolean, handleReload: () => void) => JSX.Element[];
+  getRowActions?: (row: T) => JSX.Element[];
 }
 
 export const TableView = <T extends IdDTO>({
   tableName,
   tableProperties,
+  staticItems = [],
+  totalItems = staticItems.length,
+  handleReloadHandler = () => {},
   dense = false,
-  createDialog,
-  getItemsRequest,
-  staticItems,
   navigateOnClick,
-  getTableActions,
-  toolbarActions,
+  toolbarActions = () => [],
+  getRowActions = () => [],
 }: TableViewProps<T>) => {
   const navigate = useNavigate();
-  const { user, pageSize, setPageSize, reload } = useContext(AppContext);
-  const [items, setItems] = useState<T[]>(staticItems ?? []);
+  const { user, pageSize, setPageSize } = useContext(AppContext);
   const [sortDirection, setSortDirection] = useState<SortDirection>(SortDirection.ASCENDING);
   const [sortKey, setSortKey] = useState<keyof T | "">(tableProperties.defaultSortKey);
   const [pageNumber, setPageNumber] = useState<number>(0);
-  const [totalItems, setTotalItems] = useState<number>(0);
   const [filterValue, setFilterValue] = useState<string>("");
-  const shouldRequestData = useMemo(() => staticItems, [items]);
-
-  useEffect(() => getItems(), [user]);
-
-  // TODO: Remove this, table should only display data and not make requests at all
-  useEffect(() => setItems(staticItems ?? []), [staticItems]);
 
   useEffect(() => {
     setSortDirection(SortDirection.ASCENDING);
     setSortKey(tableProperties.defaultSortKey);
     setPageNumber(0);
     setFilterValue("");
-    shouldRequestData ?? getItems();
-  }, [reload]);
+    handleReload();
+  }, [user]); //TODO
 
   useEffect(() => {
-    shouldRequestData ?? getItems();
+    handleReload();
   }, [sortDirection, sortKey, pageNumber, pageSize, filterValue]);
 
-  const getItems = () => {
+  const handleReload = () => {
     if (!user) return;
 
     const paginatedRequest = {
@@ -81,18 +81,7 @@ export const TableView = <T extends IdDTO>({
       },
     };
 
-    getItemsRequest?.request(
-      {
-        requestBody: getItemsRequest.paginated ? paginatedRequest : undefined,
-        id: getItemsRequest.id,
-      },
-      (data: any) => {
-        if (getItemsRequest.paginated) {
-          setItems(data.items);
-          setTotalItems(data.total);
-        } else setItems(data);
-      }
-    );
+    handleReloadHandler({ requestBody: paginatedRequest });
   };
 
   const handleSort = (property: keyof T) => {
@@ -103,12 +92,12 @@ export const TableView = <T extends IdDTO>({
 
   const getTableRows = useCallback(
     () =>
-      items.map((row: any) => {
+      staticItems.map((row: any) => {
         let rowCells = tableProperties.keys.map((key) => (
           <TableCell align="center">{navigateOnRowAndKey(row, key)}</TableCell>
         ));
 
-        const finalCells = getTableActions ? [...rowCells, getTableActions(row)] : rowCells;
+        const finalCells = getRowActions ? [...rowCells, getRowActions(row)] : rowCells;
 
         return (
           <TableRow
@@ -121,7 +110,7 @@ export const TableView = <T extends IdDTO>({
           </TableRow>
         );
       }),
-    [items]
+    [staticItems]
   );
 
   return (
@@ -133,24 +122,41 @@ export const TableView = <T extends IdDTO>({
         justifyContent: "center",
       }}
     >
-      <TableViewToolbar
-        tableName={tableName}
-        searchMessage={`Search by ${formatKeyToSpacedLowercase(tableProperties.filterKey.toString())}`}
-        setFilterValue={setFilterValue}
-        createDialog={createDialog}
-        dense={dense}
-        actions={toolbarActions}
-      />
+      <Toolbar>
+        <Typography
+          variant="h5"
+          sx={{ flex: 1 }}
+        >
+          {tableName}
+        </Typography>
+        {toolbarActions(dense, handleReload)}
+        {!dense && (
+          <TextField
+            type="search"
+            variant="standard"
+            sx={{ fontSize: "small", width: "20rem" }}
+            label={
+              <Box sx={{ display: "flex" }}>
+                <SearchIcon />
+                <Typography>{`Search by ${formatKeyToSpacedLowercase(
+                  tableProperties.filterKey.toString()
+                )}`}</Typography>
+              </Box>
+            }
+            onChange={(event) => setFilterValue(event.currentTarget.value)}
+          />
+        )}
+      </Toolbar>
       <TableContainer
         sx={{
           flex: 1,
           minHeight: (dense ? 2.5 : 3.7) * pageSize + "rem",
-          display: items.length === 0 ? "flex" : undefined,
-          alignItems: items.length === 0 ? "center" : undefined,
-          justifyContent: items.length === 0 ? "center" : undefined,
+          display: staticItems.length === 0 ? "flex" : undefined,
+          alignItems: staticItems.length === 0 ? "center" : undefined,
+          justifyContent: staticItems.length === 0 ? "center" : undefined,
         }}
       >
-        {items.length === 0 ? (
+        {staticItems.length === 0 ? (
           <Typography variant="h6">No entries</Typography>
         ) : (
           <Table size={dense ? "small" : "medium"}>
@@ -160,7 +166,7 @@ export const TableView = <T extends IdDTO>({
               handleSort={handleSort}
               keysOfT={tableProperties.keys}
               dense={dense}
-              haveActions={getTableActions !== undefined}
+              haveActions={getRowActions({} as T).length !== 0}
             />
             <TableBody>{getTableRows()}</TableBody>
           </Table>

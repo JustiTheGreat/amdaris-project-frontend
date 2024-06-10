@@ -1,20 +1,17 @@
 import { TextField } from "@mui/material";
 import { FC, useCallback, useContext, useState } from "react";
 import { AppContext } from "../App/App";
-import { DialogBase } from "./DialogBase";
+import { BaseDialogProps, DialogBase } from "./DialogBase";
 
-interface AddPointDialogProps {
-  dialogIsOpen: boolean;
-  closeDialog: () => void;
+interface AddPointDialogProps extends BaseDialogProps {
   matchId: string;
   playerId: string;
-  successCallback: () => void;
 }
 
 export const AddPointDialog: FC<AddPointDialogProps> = ({
   dialogIsOpen,
   closeDialog,
-  successCallback,
+  handleReload,
   matchId,
   playerId,
 }: AddPointDialogProps) => {
@@ -25,7 +22,7 @@ export const AddPointDialog: FC<AddPointDialogProps> = ({
 
   const addValueToPoint = useCallback(() => {
     requests.addValueToPointRequest({ id: matchId, auxId: playerId, requestsBody: pointValue }, (_: any) => {
-      successCallback();
+      handleReload();
       closeDialog();
       resetForm();
     });

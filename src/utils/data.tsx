@@ -4,6 +4,7 @@ import {
   GameFormatGetDTO,
   IdDTO,
   MatchDisplayDTO,
+  MatchStatus,
   PointDisplayDTO,
   RankingItemDTO,
 } from "./Types";
@@ -60,7 +61,7 @@ export const TeamKeysProperties: KeysProperties<CompetitorDisplayDTO> = {
   defaultSortKey: "name",
 };
 
-export const MatchKeysProperties: KeysProperties<MatchDisplayDTO> = {
+export const MatchKeysProperties: KeysProperties<SpecialMatch> = {
   keys: [
     { name: "status", sortable: true },
     { name: "startTime", sortable: true },
@@ -124,3 +125,12 @@ export const SpecialTeamPlayerKeysProperties: KeysProperties<SpecialTeamPlayer> 
   filterKey: "",
   defaultSortKey: "",
 };
+
+export interface SpecialMatch extends IdDTO {
+  status: MatchStatus;
+  startTime?: string;
+  competitors: string;
+  score: string;
+  competition: string;
+  winner: string | null;
+}

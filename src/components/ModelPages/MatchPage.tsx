@@ -10,7 +10,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { competitionPath, competitorPath } from "../../utils/PageConstants";
 import { MatchGetDTO, MatchStatus, PointDisplayDTO } from "../../utils/Types";
 import { UserRole } from "../../utils/UserRoles";
-import { getIndexOfEnumValueString } from "../../utils/Utils";
+import { formatDate, getIndexOfEnumValueString } from "../../utils/Utils";
 import { PointKeysProperties } from "../../utils/data";
 import { AppContext } from "../App/App";
 import { AddPointDialog } from "../Dialogs/AddPointDialog";
@@ -83,8 +83,8 @@ export const MatchPage: FC = () => {
                   <Typography variant="h4">Winner: {match.winner?.name ?? "-"}</Typography>
                 )}
                 <Typography>Location: {match.location}</Typography>
-                <Typography>StartTime: {match.startTime?.toString() ?? "-"}</Typography>
-                <Typography>EndTime: {match.endTime?.toString() ?? "-"}</Typography>
+                <Typography>StartTime: {formatDate(match.startTime)}</Typography>
+                <Typography>EndTime: {formatDate(match.endTime)}</Typography>
                 <Typography>Status: {match.status}</Typography>
                 <Typography>
                   Competitor one:{" "}
@@ -165,9 +165,10 @@ export const MatchPage: FC = () => {
               <TableView<PointDisplayDTO>
                 tableName={"Points"}
                 tableProperties={PointKeysProperties}
+                staticItems={match.points.map((point) => ({ ...point, id: point.playerId }))}
                 dense
-                staticItems={match.points}
-                getTableActions={isAdmin && match.status === MatchStatus.STARTED ? getPointActions : undefined}
+                navigateOnClick={{ navigationBaseRoute: competitorPath }}
+                getRowActions={isAdmin && match.status === MatchStatus.STARTED ? getPointActions : undefined}
               />
             ),
           },
@@ -180,7 +181,7 @@ export const MatchPage: FC = () => {
       <AddPointDialog
         dialogIsOpen={addPointDialogIsOpen}
         closeDialog={() => setAddPointDialogIsOpen(false)}
-        successCallback={getModel}
+        handleReload={getModel}
         matchId={id!}
         playerId={playerId!}
       />

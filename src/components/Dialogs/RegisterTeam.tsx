@@ -1,22 +1,21 @@
 import { Autocomplete, TextField } from "@mui/material";
 import { FC, useCallback, useContext, useEffect, useState } from "react";
-import { AppContext } from "../App/App";
-import { DialogBase } from "./DialogBase";
-import { UserRole } from "../../utils/UserRoles";
 import { CompetitionDisplayDTO } from "../../utils/Types";
+import { UserRole } from "../../utils/UserRoles";
+import { AppContext } from "../App/App";
+import { BaseDialogProps, DialogBase } from "./DialogBase";
 
-interface RegisterTeamDialogProps {
-  dialogIsOpen: boolean;
-  closeDialog: () => void;
+interface RegisterTeamDialogProps extends BaseDialogProps {
   id: string;
 }
 
 export const RegisterTeamDialog: FC<RegisterTeamDialogProps> = ({
-  id,
   dialogIsOpen,
   closeDialog,
+  handleReload,
+  id,
 }: RegisterTeamDialogProps) => {
-  const { user, requests, doReload } = useContext(AppContext);
+  const { user, requests } = useContext(AppContext);
   const [teams, setTeams] = useState<CompetitionDisplayDTO[]>([]);
   const [teamId, setTeamId] = useState<string>();
 
@@ -35,7 +34,7 @@ export const RegisterTeamDialog: FC<RegisterTeamDialogProps> = ({
   const registerTeamRequest = useCallback(
     () =>
       requests.registerCompetitorToCompetitionAdminRequest({ id, auxId: teamId }, (_: any) => {
-        doReload();
+        handleReload();
         closeDialog();
         resetForm();
       }),

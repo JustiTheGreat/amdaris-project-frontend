@@ -26,13 +26,12 @@ import { UserRole } from "../../utils/UserRoles";
 import {
   CompetitionKeysProperties,
   MatchKeysProperties,
-  PlayerKeysProperties,
   SpecialTeamPlayer,
   SpecialTeamPlayerKeysProperties,
   TeamKeysProperties,
 } from "../../utils/data";
 import { AppContext } from "../App/App";
-import { RegisterMemberDialog } from "../Dialogs/RegisterMember";
+import { RegisterTeamMemberDialog } from "../Dialogs/RegisterTeamMember";
 import { NewPageContentContainer, TabInfo } from "../PageContentContainer/NewPageContentContainer";
 import { TableView } from "../TableView/TableView";
 
@@ -85,40 +84,52 @@ export const CompetitorPage: FC = () => {
     [id]
   );
 
-  const playerToolbarActions = [
-    <Tooltip title={"Register player"}>
-      <IconButton onClick={() => setDialogIsOpen(true)}>
-        <AppRegistration fontSize="medium" />
-      </IconButton>
-    </Tooltip>,
-  ];
+  const playerToolbarActions = useCallback(
+    () =>
+      !isAdmin
+        ? []
+        : [
+            <Tooltip title={"Register player"}>
+              <IconButton onClick={() => setDialogIsOpen(true)}>
+                <AppRegistration fontSize="medium" />
+              </IconButton>
+            </Tooltip>,
+          ],
+    [isAdmin]
+  );
 
-  const getPlayerActions = (row: SpecialTeamPlayer): JSX.Element[] => [
-    <Tooltip title={"Change status"}>
-      <IconButton
-        onClick={(event) => {
-          event.stopPropagation();
-          changeTeamPlayerStatusAdmin(row.id);
-        }}
-      >
-        {competitor?.teamPlayers.find((teamPlayer) => teamPlayer.playerId === row.id)?.isActive ? (
-          <DoDisturbIcon />
-        ) : (
-          <CheckCircleOutlineIcon />
-        )}
-      </IconButton>
-    </Tooltip>,
-    <Tooltip title={"Remove player"}>
-      <IconButton
-        onClick={(event) => {
-          event.stopPropagation();
-          removePlayerFromTeamAdmin(row.id);
-        }}
-      >
-        <GridDeleteIcon />
-      </IconButton>
-    </Tooltip>,
-  ];
+  const getPlayerActions = useCallback(
+    (row: SpecialTeamPlayer): JSX.Element[] =>
+      !isAdmin
+        ? []
+        : [
+            <Tooltip title={"Change status"}>
+              <IconButton
+                onClick={(event) => {
+                  event.stopPropagation();
+                  changeTeamPlayerStatusAdmin(row.id);
+                }}
+              >
+                {competitor?.teamPlayers.find((teamPlayer) => teamPlayer.playerId === row.id)?.isActive ? (
+                  <DoDisturbIcon />
+                ) : (
+                  <CheckCircleOutlineIcon />
+                )}
+              </IconButton>
+            </Tooltip>,
+            <Tooltip title={"Remove player"}>
+              <IconButton
+                onClick={(event) => {
+                  event.stopPropagation();
+                  removePlayerFromTeamAdmin(row.id);
+                }}
+              >
+                <GridDeleteIcon />
+              </IconButton>
+            </Tooltip>,
+          ],
+    [isAdmin, competitor?.teamPlayers]
+  );
 
   const getTabInfoList = useCallback((): TabInfo[] => {
     const tabInfoList: TabInfo[] = [];
@@ -227,8 +238,8 @@ export const CompetitorPage: FC = () => {
             } as SpecialTeamPlayer;
           })}
           navigateOnClick={{ navigationBaseRoute: competitorPath }}
-          getTableActions={isAdmin ? getPlayerActions : undefined}
-          toolbarActions={isAdmin ? playerToolbarActions : undefined}
+          toolbarActions={playerToolbarActions}
+          getRowActions={getPlayerActions}
         />
       ),
     });
@@ -253,9 +264,10 @@ export const CompetitorPage: FC = () => {
   ) : (
     <>
       {id && isTeam && isAdmin && (
-        <RegisterMemberDialog
+        <RegisterTeamMemberDialog
           dialogIsOpen={dialogIsOpen}
           closeDialog={() => setDialogIsOpen(false)}
+          handleReload={getModel}
           id={id}
         />
       )}

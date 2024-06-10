@@ -11,26 +11,18 @@ import {
   teamPath,
   useRequests,
 } from "../../utils/PageConstants";
-import { CompetitionDisplayDTO, CompetitorDisplayDTO, GameFormatGetDTO } from "../../utils/Types";
 import { getUserObjectFromToken } from "../../utils/Utils";
-import {
-  CompetitionKeysProperties,
-  GameFormatKeysProperties,
-  PlayerKeysProperties,
-  TeamKeysProperties,
-} from "../../utils/data";
 import { Authentication } from "../Authentication/Authentication";
-import { CreateCompetitionDialog } from "../Dialogs/CreateCompetitionDialog";
-import { CreateGameFormatDialog } from "../Dialogs/CreateGameFormatDialog";
-import { CreatePlayerDialog } from "../Dialogs/CreatePlayerDialog";
-import { CreateTeamDialog } from "../Dialogs/CreateTeamDialog";
 import { CompetitionPage } from "../ModelPages/CompetitionPage";
 import { CompetitorPage } from "../ModelPages/CompetitorPage";
 import { MatchPage } from "../ModelPages/MatchPage";
 import { NavigationBar } from "../NavigationBar/NavigationBar";
 import { NotFound } from "../NotFound/NotFound";
+import { CompetitionsOverview } from "../Overviews/CompetitionsOverview";
+import { GameFormatsOverview } from "../Overviews/GameFormatsOverview";
+import { PlayersOverview } from "../Overviews/PlayersOverview";
+import { TeamsOverview } from "../Overviews/TeamsOverview";
 import { NewPageContentContainer } from "../PageContentContainer/NewPageContentContainer";
-import { TableView } from "../TableView/TableView";
 import { UnauthorizedContainer } from "../UnauthorizedContainer/UnauthorizedContainer";
 
 interface User {
@@ -40,36 +32,26 @@ interface User {
 
 interface AppContextType {
   user: User | undefined;
-  token: string | undefined;
-  setToken: (value: string | undefined) => void;
   pageSize: number;
   setPageSize: (value: 5 | 10) => void;
-  createDialogIsOpen: boolean;
-  openCreateDialog: () => void;
-  closeCreateDialog: () => void;
   setAlertMessage: (value: string) => void;
-  reload: boolean;
-  doReload: () => void;
   requests: any;
 }
 
-export const AppContext = createContext({ token: undefined } as AppContextType);
+export const AppContext = createContext({} as AppContextType);
 
 export type PageSize = 5 | 10;
 
 export const App: FC = () => {
   const location = useLocation();
-  const [token, setToken] = useState<string | undefined>(undefined);
   const [pageSize, setPageSize] = useState<5 | 10>(5);
   const [alertMesssage, setAlertMessage] = useState<string | undefined>(undefined);
-  const [createDialogIsOpen, setCreateDialogIsOpen] = useState<boolean>(false);
-  const [reload, setReload] = useState<boolean>(false);
   const [user, setUser] = useState<User>();
 
-  const requests = useRequests(token, setAlertMessage);
+  const requests = useRequests(setAlertMessage);
 
   const authenticated = useMemo<boolean>(
-    () => location.pathname !== authenticationPath && token !== undefined,
+    () => location.pathname !== authenticationPath && localStorage.getItem("token") !== null,
     [location.pathname]
   );
 
@@ -78,29 +60,18 @@ export const App: FC = () => {
     [location.pathname]
   );
 
-  // useEffect(() => {
-  //   if (unauthorizedAccess) navigate(authenticationPath);
-  //   setAlertMessage("Page was refreshed!");
-  // }, [location.pathname]);
-
-  useEffect(() => (authenticated ? setUser(getUserObjectFromToken(token!)) : undefined), [authenticated]);
-
-  const doReload = () => setReload(!reload);
+  useEffect(
+    () => (authenticated ? setUser(getUserObjectFromToken(localStorage.getItem("token"))) : undefined),
+    [authenticated]
+  );
 
   return (
     <AppContext.Provider
       value={{
         user,
-        token,
-        setToken,
         pageSize,
         setPageSize,
-        createDialogIsOpen,
-        openCreateDialog: () => setCreateDialogIsOpen(true),
-        closeCreateDialog: () => setCreateDialogIsOpen(false),
         setAlertMessage,
-        reload,
-        doReload,
         requests,
       }}
     >
@@ -130,55 +101,28 @@ export const App: FC = () => {
             />
 
             <Route element={<UnauthorizedContainer unauthorizedAccess={unauthorizedAccess} />}>
-              <Route path={competitionPath}>
+              <Route element={<NewPageContentContainer />}>
                 <Route
-                  index
-                  element={
-                    <NewPageContentContainer>
-                      <TableView<CompetitionDisplayDTO>
-                        tableName="Competitions"
-                        tableProperties={CompetitionKeysProperties}
-                        getItemsRequest={{ request: requests.getCompetitionsRequest, paginated: true }}
-                        navigateOnClick={{ navigationBaseRoute: competitionPath }}
-                        createDialog={<CreateCompetitionDialog />}
-                      />
-                    </NewPageContentContainer>
-                  }
+                  path={competitionPath}
+                  element={<CompetitionsOverview />}
                 />
                 <Route
-                  path={":id"}
-                  element={<CompetitionPage />}
+                  path={playerPath}
+                  element={<PlayersOverview />}
+                />
+                <Route
+                  path={teamPath}
+                  element={<TeamsOverview />}
+                />
+                <Route
+                  path={gameFormatPath}
+                  element={<GameFormatsOverview />}
                 />
               </Route>
 
               <Route
-                path={playerPath}
-                element={
-                  <NewPageContentContainer>
-                    <TableView<CompetitorDisplayDTO>
-                      tableName="Players"
-                      tableProperties={PlayerKeysProperties}
-                      getItemsRequest={{ request: requests.getPlayersRequest, paginated: true }}
-                      navigateOnClick={{ navigationBaseRoute: competitorPath }}
-                      createDialog={<CreatePlayerDialog />}
-                    />
-                  </NewPageContentContainer>
-                }
-              />
-
-              <Route
-                path={teamPath}
-                element={
-                  <NewPageContentContainer>
-                    <TableView<CompetitorDisplayDTO>
-                      tableName="Teams"
-                      tableProperties={TeamKeysProperties}
-                      getItemsRequest={{ request: requests.getTeamsRequest, paginated: true }}
-                      navigateOnClick={{ navigationBaseRoute: competitorPath }}
-                      createDialog={<CreateTeamDialog />}
-                    />
-                  </NewPageContentContainer>
-                }
+                path={`${competitionPath}/:id`}
+                element={<CompetitionPage />}
               />
 
               <Route
@@ -189,20 +133,6 @@ export const App: FC = () => {
               <Route
                 path={`${matchPath}/:id`}
                 element={<MatchPage />}
-              />
-
-              <Route
-                path={gameFormatPath}
-                element={
-                  <NewPageContentContainer>
-                    <TableView<GameFormatGetDTO>
-                      tableName="Game formats"
-                      tableProperties={GameFormatKeysProperties}
-                      getItemsRequest={{ request: requests.getGameFormatsRequest, paginated: true }}
-                      createDialog={<CreateGameFormatDialog />}
-                    />
-                  </NewPageContentContainer>
-                }
               />
             </Route>
 

@@ -1,6 +1,12 @@
 import { Box, Button, Dialog, DialogActions, DialogContent, DialogTitle } from "@mui/material";
 import { FC, ReactNode } from "react";
 
+export interface BaseDialogProps {
+  dialogIsOpen: boolean;
+  closeDialog: () => void;
+  handleReload: () => void;
+}
+
 interface DialogBaseProps {
   title: string;
   open: boolean;

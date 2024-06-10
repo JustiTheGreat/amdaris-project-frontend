@@ -1,6 +1,7 @@
 import { Box, Tab, Tabs, Tooltip } from "@mui/material";
 import { FC, useMemo, useRef, useState } from "react";
 import { useRefDimensions } from "../../utils/UseRefDimensions";
+import { Outlet } from "react-router-dom";
 
 export interface TabInfo {
   tooltip: string;
@@ -96,6 +97,8 @@ export const NewPageContentContainer: FC<NewPageContentContainerProps> = ({
       >
         {children ? (
           children
+        ) : tabInfoList.length === 0 ? (
+          <Outlet />
         ) : (
           <Box
             sx={{

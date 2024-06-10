@@ -8,7 +8,7 @@ import {
   Scoreboard as ScoreboardIcon,
 } from "@mui/icons-material";
 import { Box, Button, IconButton, Tooltip, Typography } from "@mui/material";
-import { FC, useContext, useEffect, useMemo, useState } from "react";
+import { FC, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 import { competitorPath, matchPath } from "../../utils/PageConstants";
 import {
@@ -25,6 +25,7 @@ import {
   MatchKeysProperties,
   PlayerKeysProperties,
   RankingItemKeysProperties,
+  SpecialMatch,
   TeamKeysProperties,
 } from "../../utils/data";
 import { AppContext } from "../App/App";
@@ -32,10 +33,12 @@ import { RegisterPlayerDialog } from "../Dialogs/RegisterPlayer";
 import { RegisterTeamDialog } from "../Dialogs/RegisterTeam";
 import { NewPageContentContainer, TabInfo } from "../PageContentContainer/NewPageContentContainer";
 import { TableView } from "../TableView/TableView";
+import { formatDate } from "../../utils/Utils";
 
 export const CompetitionPage: FC = () => {
   const { requests, user } = useContext(AppContext);
   const [competition, setCompetition] = useState<CompetitionGetDTO>();
+  const [ranking, setRanking] = useState<RankingItemDTO[]>([]);
   const [winners, setWinners] = useState<CompetitorGetDTO[]>([]);
   const [dialogIsOpen, setDialogIsOpen] = useState<boolean>(false);
   const { id } = useParams();
@@ -82,28 +85,44 @@ export const CompetitionPage: FC = () => {
     return !playerFromCompetition && isPlayerCompetition;
   }, [competition]);
 
-  const competitorToolbarActions = [
-    <Tooltip title={`Register ${isPlayerCompetition ? "player" : "team"}`}>
-      <IconButton onClick={() => setDialogIsOpen(true)}>
-        <GroupAddIcon fontSize="medium" />
-      </IconButton>
-    </Tooltip>,
-  ];
+  const competitorToolbarActions = useCallback(
+    () =>
+      !isAdmin || competition?.status !== CompetitionStatus.ORGANIZING
+        ? []
+        : [
+            <Tooltip title={`Register ${isPlayerCompetition ? "player" : "team"}`}>
+              <IconButton onClick={() => setDialogIsOpen(true)}>
+                <GroupAddIcon fontSize="medium" />
+              </IconButton>
+            </Tooltip>,
+          ],
+    [isAdmin, competition?.status, isPlayerCompetition]
+  );
 
-  const getCompetitorActions = (row: CompetitorDisplayDTO): JSX.Element[] => [
-    <Tooltip title={`Remove ${isPlayerCompetition ? "player" : "team"}`}>
-      <IconButton
-        onClick={(event) => {
-          event.stopPropagation();
-          requests.removeCompetitorFromCompetitionAdminRequest({ id, auxId: row.id }, (data: any) =>
-            setCompetition(data)
-          );
-        }}
-      >
-        <GroupRemoveIcon />
-      </IconButton>
-    </Tooltip>,
-  ];
+  const getCompetitorActions = useCallback(
+    (row: CompetitorDisplayDTO): JSX.Element[] =>
+      !isAdmin || competition?.status !== CompetitionStatus.ORGANIZING
+        ? []
+        : [
+            <Tooltip title={`Remove ${isPlayerCompetition ? "player" : "team"}`}>
+              <IconButton
+                onClick={(event) => {
+                  event.stopPropagation();
+                  requests.removeCompetitorFromCompetitionAdminRequest({ id, auxId: row.id }, (data: any) =>
+                    setCompetition(data)
+                  );
+                }}
+              >
+                <GroupRemoveIcon />
+              </IconButton>
+            </Tooltip>,
+          ],
+    [isAdmin, competition?.status, isPlayerCompetition, id]
+  );
+
+  const getRanking = useCallback(() => {
+    requests.getCompetitionRankingRequest({ id }, (data: any) => setRanking(data));
+  }, [id]);
 
   const tabInfoList: TabInfo[] =
     !competition || !user
@@ -118,7 +137,7 @@ export const CompetitionPage: FC = () => {
                 <Typography variant="h4">Winners:{winners.map((winner) => " " + winner.name)}</Typography>
                 <Typography>Name: {competition.name}</Typography>
                 <Typography>Location: {competition.location}</Typography>
-                <Typography>StartTime: {competition.startTime.toString()}</Typography>
+                <Typography>Starting time: {formatDate(competition.startTime)}</Typography>
                 <Typography>Status: {competition.status}</Typography>
                 {competition.breakInMinutes && (
                   <Typography>Break time in minutes: {competition.breakInMinutes}</Typography>
@@ -198,8 +217,10 @@ export const CompetitionPage: FC = () => {
               <TableView<RankingItemDTO>
                 tableName={`${isPlayerCompetition ? "Players" : "Teams"} ranking`}
                 tableProperties={RankingItemKeysProperties}
+                staticItems={ranking}
+                totalItems={ranking.length}
+                handleReloadHandler={getRanking}
                 dense
-                getItemsRequest={{ request: requests.getCompetitionRankingRequest, id }}
                 navigateOnClick={{ navigationBaseRoute: competitorPath }}
               />
             ),
@@ -211,31 +232,21 @@ export const CompetitionPage: FC = () => {
               <TableView<CompetitorDisplayDTO>
                 tableName={"Players"}
                 tableProperties={PlayerKeysProperties}
-                deletableEntries={isAdmin}
-                dense
                 staticItems={competition?.competitors}
+                dense
                 navigateOnClick={{ navigationBaseRoute: competitorPath }}
-                getTableActions={
-                  isAdmin && competition.status === CompetitionStatus.ORGANIZING ? getCompetitorActions : undefined
-                }
-                toolbarActions={
-                  isAdmin && competition.status === CompetitionStatus.ORGANIZING ? competitorToolbarActions : undefined
-                }
+                toolbarActions={competitorToolbarActions}
+                getRowActions={getCompetitorActions}
               />
             ) : (
               <TableView<CompetitorDisplayDTO>
                 tableName={"Teams"}
                 tableProperties={TeamKeysProperties}
-                deletableEntries={isAdmin}
-                dense
                 staticItems={competition?.competitors}
+                dense
                 navigateOnClick={{ navigationBaseRoute: competitorPath }}
-                getTableActions={
-                  isAdmin && competition.status === CompetitionStatus.ORGANIZING ? getCompetitorActions : undefined
-                }
-                toolbarActions={
-                  isAdmin && competition.status === CompetitionStatus.ORGANIZING ? competitorToolbarActions : undefined
-                }
+                toolbarActions={competitorToolbarActions}
+                getRowActions={getCompetitorActions}
               />
             ),
           },
@@ -243,11 +254,14 @@ export const CompetitionPage: FC = () => {
             tooltip: "Matches",
             icon: <ScoreboardIcon fontSize="large" />,
             content: (
-              <TableView<MatchDisplayDTO>
+              <TableView<SpecialMatch>
                 tableName="Matches"
                 tableProperties={MatchKeysProperties}
                 dense
-                staticItems={competition?.matches}
+                staticItems={competition?.matches.map((match) => ({
+                  ...match,
+                  startTime: formatDate(match.startTime),
+                }))}
                 navigateOnClick={{ navigationBaseRoute: matchPath }}
               />
             ),
@@ -265,12 +279,14 @@ export const CompetitionPage: FC = () => {
           <RegisterPlayerDialog
             dialogIsOpen={dialogIsOpen}
             closeDialog={() => setDialogIsOpen(false)}
+            handleReload={getModel}
             id={id}
           />
         ) : (
           <RegisterTeamDialog
             dialogIsOpen={dialogIsOpen}
             closeDialog={() => setDialogIsOpen(false)}
+            handleReload={getModel}
             id={id}
           />
         ))}

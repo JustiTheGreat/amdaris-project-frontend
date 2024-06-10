@@ -1,10 +1,16 @@
 import { TextField } from "@mui/material";
 import { FC, useCallback, useContext, useState } from "react";
 import { AppContext } from "../App/App";
-import { DialogBase } from "./DialogBase";
+import { BaseDialogProps, DialogBase } from "./DialogBase";
 
-export const CreatePlayerDialog: FC = () => {
-  const { requests, createDialogIsOpen, closeCreateDialog, doReload, setAlertMessage } = useContext(AppContext);
+interface CreatePlayerDialogProps extends BaseDialogProps {}
+
+export const CreatePlayerDialog: FC<CreatePlayerDialogProps> = ({
+  dialogIsOpen,
+  closeDialog,
+  handleReload,
+}: CreatePlayerDialogProps) => {
+  const { requests, setAlertMessage } = useContext(AppContext);
   const [name, setName] = useState<string>("");
 
   const resetForm = () => setName("");
@@ -18,8 +24,8 @@ export const CreatePlayerDialog: FC = () => {
     const data = { name };
 
     requests.createPlayerRequest({ requestBody: data }, (_: any) => {
-      doReload();
-      closeCreateDialog();
+      handleReload();
+      closeDialog();
       resetForm();
     });
   }, [name]);
@@ -27,10 +33,10 @@ export const CreatePlayerDialog: FC = () => {
   return (
     <DialogBase
       title={"Create player"}
-      open={createDialogIsOpen}
+      open={dialogIsOpen}
       doAction={{ name: "Create", handle: createRequest }}
       handleClose={() => {
-        closeCreateDialog();
+        closeDialog();
         resetForm();
       }}
     >

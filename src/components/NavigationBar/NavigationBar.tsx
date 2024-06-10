@@ -1,7 +1,7 @@
 import { AccountCircle } from "@mui/icons-material";
 import { Box, IconButton, Menu, MenuItem, Tab, Tabs, Toolbar, Tooltip, Typography } from "@mui/material";
-import { FC, useContext, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { FC, useContext, useEffect, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import {
   authenticationPath,
   competitionPath,
@@ -20,8 +20,9 @@ const defaultNavigationTab: NavigationTab = competitionPath;
 
 export const NavigationBar: FC = () => {
   const navigate = useNavigate();
-  const { user, setToken, doReload } = useContext(AppContext);
-  const [navigationTab, setNavigationTab] = useState<NavigationTab>(defaultNavigationTab);
+  const location = useLocation();
+  const { user } = useContext(AppContext);
+  const [navigationTab, setNavigationTab] = useState<NavigationTab | undefined>(defaultNavigationTab);
   const [anchorElUser, setAnchorElUser] = useState<null | HTMLElement>(null);
 
   const handleOpenUserMenu = (event: React.MouseEvent<HTMLElement>) => setAnchorElUser(event.currentTarget);
@@ -36,10 +37,14 @@ export const NavigationBar: FC = () => {
 
   const handleLogout = () => {
     setNavigationTab(competitionPath);
-    setToken(undefined);
+    localStorage.removeItem("token");
     navigate(authenticationPath);
     handleCloseUserMenu();
   };
+
+  useEffect(() => {
+    if (!navigationBarTabs.includes(location.pathname.slice(1))) setNavigationTab(undefined);
+  }, [location.pathname]);
 
   return (
     <Toolbar
@@ -70,20 +75,19 @@ export const NavigationBar: FC = () => {
         onChange={(_, value) => {
           setNavigationTab(value);
           navigate(`/${value}`);
-          doReload();
         }}
         textColor="secondary"
         indicatorColor="secondary"
       >
         {navigationBarTabs.map((nbt) => (
           <Tab
+            key={nbt}
             value={nbt}
             label={formatCamelCaseToReadable(nbt)}
             onClick={(_) => {
               if (nbt === navigationTab && nbt != location.pathname.slice(1)) {
                 setNavigationTab(nbt);
                 navigate(`/${nbt}`);
-                doReload();
               }
             }}
           />

@@ -6,10 +6,16 @@ import { PaginatedRequest } from "../../utils/PageConstants";
 import { CompetitionType, GameFormatGetDTO, SortDirection } from "../../utils/Types";
 import { UserRole } from "../../utils/UserRoles";
 import { AppContext } from "../App/App";
-import { DialogBase } from "./DialogBase";
+import { BaseDialogProps, DialogBase } from "./DialogBase";
 
-export const CreateCompetitionDialog: FC = () => {
-  const { user, requests, createDialogIsOpen, closeCreateDialog, doReload, setAlertMessage } = useContext(AppContext);
+interface CreateCompetitionDialogProps extends BaseDialogProps {}
+
+export const CreateCompetitionDialog: FC<CreateCompetitionDialogProps> = ({
+  dialogIsOpen,
+  closeDialog,
+  handleReload,
+}: CreateCompetitionDialogProps) => {
+  const { user, requests, setAlertMessage } = useContext(AppContext);
   const [name, setName] = useState<string>("");
   const [location, setLocation] = useState<string>("");
   const [startTime, setStartTime] = useState<Dayjs | null>(dayjs(new Date()));
@@ -90,8 +96,8 @@ export const CreateCompetitionDialog: FC = () => {
     };
 
     const callback = (_: any) => {
-      doReload();
-      closeCreateDialog();
+      handleReload();
+      closeDialog();
       resetForm();
     };
 
@@ -103,10 +109,10 @@ export const CreateCompetitionDialog: FC = () => {
   return (
     <DialogBase
       title="Create competition"
-      open={createDialogIsOpen}
+      open={dialogIsOpen}
       doAction={{ name: "Create", handle: createRequest }}
       handleClose={() => {
-        closeCreateDialog();
+        closeDialog();
         resetForm();
       }}
     >

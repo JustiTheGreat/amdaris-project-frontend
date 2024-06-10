@@ -55,7 +55,7 @@ export interface APRequestData {
 
 export type APRequest = (data: APRequestData, callback: (response: string) => void) => void;
 
-export const useRequests = (token: string | undefined, setAlertMessage: (message: string) => void) => {
+export const useRequests = (setAlertMessage: (message: string) => void) => {
   const navigate = useNavigate();
 
   const request = (
@@ -68,7 +68,7 @@ export const useRequests = (token: string | undefined, setAlertMessage: (message
       method: method,
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
       },
       body: bodyContent ? JSON.stringify(bodyContent) : undefined,
       mode: "cors",

@@ -1,22 +1,21 @@
 import { Autocomplete, TextField } from "@mui/material";
 import { FC, useCallback, useContext, useEffect, useState } from "react";
-import { AppContext } from "../App/App";
-import { DialogBase } from "./DialogBase";
-import { UserRole } from "../../utils/UserRoles";
 import { CompetitionDisplayDTO } from "../../utils/Types";
+import { UserRole } from "../../utils/UserRoles";
+import { AppContext } from "../App/App";
+import { BaseDialogProps, DialogBase } from "./DialogBase";
 
-interface RegisterMemberDialogProps {
-  dialogIsOpen: boolean;
-  closeDialog: () => void;
+interface RegisterTeamMemberDialogProps extends BaseDialogProps {
   id: string;
 }
 
-export const RegisterMemberDialog: FC<RegisterMemberDialogProps> = ({
-  id,
+export const RegisterTeamMemberDialog: FC<RegisterTeamMemberDialogProps> = ({
   dialogIsOpen,
   closeDialog,
-}: RegisterMemberDialogProps) => {
-  const { user, requests, doReload } = useContext(AppContext);
+  handleReload,
+  id,
+}: RegisterTeamMemberDialogProps) => {
+  const { user, requests } = useContext(AppContext);
   const [players, setPlayers] = useState<CompetitionDisplayDTO[]>([]);
   const [playerId, setPlayerId] = useState<string>();
 
@@ -28,14 +27,14 @@ export const RegisterMemberDialog: FC<RegisterMemberDialogProps> = ({
   const resetForm = () => setPlayerId(undefined);
 
   const getPlayersNotInTeam = useCallback(
-    () => requests.getPlayersNotInTeamRequest({ id }, (data: any) => setPlayers(data.items)),
+    () => requests.getPlayersNotInTeamRequest({ id }, (data: any) => setPlayers(data)),
     [id]
   );
 
   const addPlayerToTeam = useCallback(
     () =>
       requests.addPlayerToTeamAdminRequest({ id, auxId: playerId }, (_: any) => {
-        doReload();
+        handleReload();
         closeDialog();
         resetForm();
       }),

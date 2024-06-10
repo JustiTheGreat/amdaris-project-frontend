@@ -4,10 +4,16 @@ import { PaginatedRequest } from "../../utils/PageConstants";
 import { CompetitorType, GameTypeGetDTO, SortDirection } from "../../utils/Types";
 import { UserRole } from "../../utils/UserRoles";
 import { AppContext } from "../App/App";
-import { DialogBase } from "./DialogBase";
+import { BaseDialogProps, DialogBase } from "./DialogBase";
 
-export const CreateGameFormatDialog: FC = () => {
-  const { user, requests, createDialogIsOpen, closeCreateDialog, doReload, setAlertMessage } = useContext(AppContext);
+interface CreateGameFormatDialogProps extends BaseDialogProps {}
+
+export const CreateGameFormatDialog: FC<CreateGameFormatDialogProps> = ({
+  dialogIsOpen,
+  closeDialog,
+  handleReload,
+}: CreateGameFormatDialogProps) => {
+  const { user, requests, setAlertMessage } = useContext(AppContext);
   const [name, setName] = useState<string>("");
   const [gameType, setGameType] = useState<string>("");
   const [competitorType, setCompetitorType] = useState<CompetitorType>();
@@ -94,8 +100,8 @@ export const CreateGameFormatDialog: FC = () => {
     };
 
     requests.createGameFormatRequest({ requestBody: data }, (_: any) => {
-      doReload();
-      closeCreateDialog();
+      handleReload();
+      closeDialog();
       resetForm();
     });
   }, [name, gameType, competitorType, teamSize, winAt, durationInMinutes]);
@@ -103,10 +109,10 @@ export const CreateGameFormatDialog: FC = () => {
   return (
     <DialogBase
       title={"Create game format"}
-      open={createDialogIsOpen}
+      open={dialogIsOpen}
       doAction={{ name: "Create", handle: createRequest }}
       handleClose={() => {
-        closeCreateDialog();
+        closeDialog();
         resetForm();
       }}
     >

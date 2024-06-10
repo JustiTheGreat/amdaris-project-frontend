@@ -150,7 +150,7 @@ export default createTheme({
             backgroundColor: alpha(definedColors.focus.main, definedColors.focus.hoverOpacity),
           },
           "&.Mui-selected:hover": {
-            backgroundColor: alpha(definedColors.focus.main, definedColors.focus.activatedOpacity),
+            backgroundColor: alpha(definedColors.focus.main, definedColors.focus.hoverOpacity),
           },
         },
       },

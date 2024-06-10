@@ -1,8 +1,8 @@
 import { Box, Typography } from "@mui/material";
 import { FC } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { authenticationPath } from "../../utils/PageConstants";
 import { VisibilityAnimation } from "../Animations/VisibilityAnimation";
+import { authenticationPath } from "../../utils/PageConstants";
 
 export const NotFound: FC = () => {
   return (
@@ -22,7 +22,7 @@ export const NotFound: FC = () => {
           to={authenticationPath}
           style={{ fontSize: "small" }}
         >
-          Authenticate here!
+          Go to authentication page!
         </Link>
       </Box>
     </VisibilityAnimation>

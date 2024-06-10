@@ -27,9 +27,18 @@ export const getIndexOfEnumValueString = <ENUM extends string>(
     })
     .find((o) => o.value === enumValue)?.i;
 
-export const getUserObjectFromToken = (token: string) => {
+export const getUserObjectFromToken = (token: string | null) => {
+  if (!token) return undefined;
   const decodedToken: any = jwtDecode(token);
   const role = decodedToken["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"];
   const playerId = decodedToken["PlayerId"];
   return { role: role, playerId: playerId };
+};
+
+export const formatDate = (date: Date | null | undefined): string => {
+  if (!date) return "-";
+  const localDate = new Date(date.toLocaleString());
+  return `${localDate.getDay() < 10 ? `0${localDate.getDay()}` : localDate.getDay()}/${
+    localDate.getDate() < 10 ? `0${localDate.getDate()}` : localDate.getDate()
+  }/${localDate.getFullYear()} ${localDate.getHours()}:${localDate.getMinutes()}`;
 };
