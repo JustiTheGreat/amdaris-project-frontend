@@ -35,10 +35,12 @@ export const getUserObjectFromToken = (token: string | null) => {
   return { role: role, playerId: playerId };
 };
 
+export const addZeroBefore = (nr: number) => `${nr < 10 ? `0${nr}` : nr}`;
+
 export const formatDate = (date: Date | null | undefined): string => {
   if (!date) return "-";
   const localDate = new Date(date.toLocaleString());
-  return `${localDate.getDay() < 10 ? `0${localDate.getDay()}` : localDate.getDay()}/${
-    localDate.getDate() < 10 ? `0${localDate.getDate()}` : localDate.getDate()
-  }/${localDate.getFullYear()} ${localDate.getHours()}:${localDate.getMinutes()}`;
+  return `${addZeroBefore(localDate.getDay())}/${addZeroBefore(localDate.getDate())}/${addZeroBefore(
+    localDate.getFullYear()
+  )} ${addZeroBefore(localDate.getHours())}:${addZeroBefore(localDate.getMinutes())}`;
 };

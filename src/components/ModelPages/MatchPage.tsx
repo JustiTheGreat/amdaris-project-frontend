@@ -14,7 +14,7 @@ import { formatDate, getIndexOfEnumValueString } from "../../utils/Utils";
 import { PointKeysProperties } from "../../utils/data";
 import { AppContext } from "../App/App";
 import { AddPointDialog } from "../Dialogs/AddPointDialog";
-import { NewPageContentContainer, TabInfo } from "../PageContentContainer/NewPageContentContainer";
+import { NewPageContentContainer, TabInfo } from "../Containers/NewPageContentContainer";
 import { TableView } from "../TableView/TableView";
 
 export const MatchPage: FC = () => {
@@ -33,12 +33,12 @@ export const MatchPage: FC = () => {
 
   const getModel = () => requests.getMatchRequest({ id }, (data: any) => setMatch(data));
 
-  const startRequest = () => requests.startMatch({ id }, (data: any) => setMatch(data));
+  const startRequest = () => requests.startMatchRequest({ id }, (data: any) => setMatch(data));
 
   const endRequest = (
     endStatus: MatchStatus.FINISHED | MatchStatus.SPECIAL_WIN_COMPETITOR_ONE | MatchStatus.SPECIAL_WIN_COMPETITOR_TWO
   ) =>
-    requests.endMatch(
+    requests.endMatchRequest(
       { id, requestBody: getIndexOfEnumValueString<MatchStatus>(MatchStatus, endStatus) },
       (data: any) => setMatch(data)
     );
@@ -83,8 +83,8 @@ export const MatchPage: FC = () => {
                   <Typography variant="h4">Winner: {match.winner?.name ?? "-"}</Typography>
                 )}
                 <Typography>Location: {match.location}</Typography>
-                <Typography>StartTime: {formatDate(match.startTime)}</Typography>
-                <Typography>EndTime: {formatDate(match.endTime)}</Typography>
+                <Typography>Start time: {formatDate(match.startTime)}</Typography>
+                <Typography>End time: {formatDate(match.endTime)}</Typography>
                 <Typography>Status: {match.status}</Typography>
                 <Typography>
                   Competitor one:{" "}

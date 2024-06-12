@@ -21,19 +21,19 @@ import {
   RankingItemDTO,
 } from "../../utils/Types";
 import { UserRole } from "../../utils/UserRoles";
+import { formatDate } from "../../utils/Utils";
 import {
   MatchKeysProperties,
   PlayerKeysProperties,
   RankingItemKeysProperties,
-  SpecialMatch,
   TeamKeysProperties,
 } from "../../utils/data";
 import { AppContext } from "../App/App";
 import { RegisterPlayerDialog } from "../Dialogs/RegisterPlayer";
 import { RegisterTeamDialog } from "../Dialogs/RegisterTeam";
-import { NewPageContentContainer, TabInfo } from "../PageContentContainer/NewPageContentContainer";
+import { NewPageContentContainer, TabInfo } from "../Containers/NewPageContentContainer";
 import { TableView } from "../TableView/TableView";
-import { formatDate } from "../../utils/Utils";
+import { Timer } from "../Timer/Timer";
 
 export const CompetitionPage: FC = () => {
   const { requests, user } = useContext(AppContext);
@@ -134,15 +134,26 @@ export const CompetitionPage: FC = () => {
             content: (
               <Box style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
                 <Typography variant="h4">{competition.name}</Typography>
-                <Typography variant="h4">Winners:{winners.map((winner) => " " + winner.name)}</Typography>
-                <Typography>Name: {competition.name}</Typography>
+                {(competition.status === CompetitionStatus.ORGANIZING ||
+                  competition.status === CompetitionStatus.NOT_STARTED) && (
+                  <Typography
+                    variant="h4"
+                    sx={{ display: "flex", alignItems: "center", gap: (theme) => theme.spacing(2) }}
+                  >
+                    <>Starts in</> <Timer untilDate={competition.startTime} />
+                  </Typography>
+                )}
+                {competition.status === CompetitionStatus.FINISHED && (
+                  <Typography variant="h4">Winners:{winners.map((winner) => " " + winner.name)}</Typography>
+                )}
+
                 <Typography>Location: {competition.location}</Typography>
                 <Typography>Starting time: {formatDate(competition.startTime)}</Typography>
                 <Typography>Status: {competition.status}</Typography>
                 {competition.breakInMinutes && (
                   <Typography>Break time in minutes: {competition.breakInMinutes}</Typography>
                 )}
-                <Typography>GameType: {competition.gameType.name}</Typography>
+                <Typography>Game type: {competition.gameType.name}</Typography>
                 <Typography>Competitor type: {competition.competitorType}</Typography>
                 {competition.teamSize && <Typography>Team size: {competition.teamSize}</Typography>}
                 {competition.winAt && <Typography>Win at score: {competition.winAt}</Typography>}
@@ -254,14 +265,11 @@ export const CompetitionPage: FC = () => {
             tooltip: "Matches",
             icon: <ScoreboardIcon fontSize="large" />,
             content: (
-              <TableView<SpecialMatch>
+              <TableView<MatchDisplayDTO>
                 tableName="Matches"
                 tableProperties={MatchKeysProperties}
                 dense
-                staticItems={competition?.matches.map((match) => ({
-                  ...match,
-                  startTime: formatDate(match.startTime),
-                }))}
+                staticItems={competition?.matches}
                 navigateOnClick={{ navigationBaseRoute: matchPath }}
               />
             ),

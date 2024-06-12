@@ -1,6 +1,6 @@
-import { Alert, Box, Container, Snackbar } from "@mui/material";
+import { Alert, Box, Snackbar } from "@mui/material";
 import { FC, createContext, useEffect, useMemo, useState } from "react";
-import { Route, Routes, useLocation } from "react-router-dom";
+import { Route, Routes } from "react-router-dom";
 import {
   authenticationPath,
   competitionPath,
@@ -12,17 +12,20 @@ import {
   useRequests,
 } from "../../utils/PageConstants";
 import { getUserObjectFromToken } from "../../utils/Utils";
+import { VisibilityAnimation } from "../Animations/VisibilityAnimation";
 import { Authentication } from "../Authentication/Authentication";
+import { AppContainer } from "../Containers/AppContainer";
+import { NewPageContentContainer } from "../Containers/NewPageContentContainer";
 import { CompetitionPage } from "../ModelPages/CompetitionPage";
 import { CompetitorPage } from "../ModelPages/CompetitorPage";
 import { MatchPage } from "../ModelPages/MatchPage";
+import { ParallaxText } from "../MovingText/MovingText";
 import { NavigationBar } from "../NavigationBar/NavigationBar";
 import { NotFound } from "../NotFound/NotFound";
 import { CompetitionsOverview } from "../Overviews/CompetitionsOverview";
 import { GameFormatsOverview } from "../Overviews/GameFormatsOverview";
 import { PlayersOverview } from "../Overviews/PlayersOverview";
 import { TeamsOverview } from "../Overviews/TeamsOverview";
-import { NewPageContentContainer } from "../PageContentContainer/NewPageContentContainer";
 import { UnauthorizedContainer } from "../UnauthorizedContainer/UnauthorizedContainer";
 
 interface User {
@@ -43,7 +46,6 @@ export const AppContext = createContext({} as AppContextType);
 export type PageSize = 5 | 10;
 
 export const App: FC = () => {
-  const location = useLocation();
   const [pageSize, setPageSize] = useState<5 | 10>(5);
   const [alertMesssage, setAlertMessage] = useState<string | undefined>(undefined);
   const [user, setUser] = useState<User>();
@@ -75,32 +77,37 @@ export const App: FC = () => {
         requests,
       }}
     >
-      <Box
+      {/* <Box
         sx={{
           backgroundColor: "secondary.main",
           minHeight: "100vh",
           display: "flex",
           flexDirection: "column",
+          position: "fixed",
         }}
-      >
-        <Container
-          sx={{
-            flex: 1,
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: authenticated ? "undefined" : "center",
-            alignItems: authenticated ? "stretch" : "center",
-            padding: "1rem",
-          }}
-        >
-          {authenticated && <NavigationBar />}
-          <Routes>
-            <Route
-              path={authenticationPath}
-              element={<Authentication />}
-            />
+      ></Box> */}
 
-            <Route element={<UnauthorizedContainer unauthorizedAccess={unauthorizedAccess} />}>
+      <Routes>
+        <Route element={<AppContainer center />}>
+          <Route
+            path={authenticationPath}
+            element={<Authentication />}
+          />
+          <Route
+            path={"/*"}
+            element={
+              <VisibilityAnimation>
+                <NewPageContentContainer width={"30rem"}>
+                  <NotFound />
+                </NewPageContentContainer>
+              </VisibilityAnimation>
+            }
+          />
+        </Route>
+
+        <Route element={<AppContainer />}>
+          <Route element={<UnauthorizedContainer unauthorizedAccess={unauthorizedAccess} />}>
+            <Route element={<NavigationBar />}>
               <Route element={<NewPageContentContainer />}>
                 <Route
                   path={competitionPath}
@@ -135,29 +142,24 @@ export const App: FC = () => {
                 element={<MatchPage />}
               />
             </Route>
-
-            <Route
-              path={"/*"}
-              element={
-                <NewPageContentContainer width={"30rem"}>
-                  <NotFound />
-                </NewPageContentContainer>
-              }
-            />
-          </Routes>
-          <Snackbar
-            open={Boolean(alertMesssage)}
-            onClose={() => setAlertMessage(undefined)}
-            onClick={() => setAlertMessage(undefined)}
-          >
-            <Alert
-              variant="filled"
-              severity="error"
-            >
-              {alertMesssage}
-            </Alert>
-          </Snackbar>
-        </Container>
+          </Route>
+        </Route>
+      </Routes>
+      <Snackbar
+        open={Boolean(alertMesssage)}
+        onClose={() => setAlertMessage(undefined)}
+        onClick={() => setAlertMessage(undefined)}
+      >
+        <Alert
+          variant="filled"
+          severity="error"
+        >
+          {alertMesssage}
+        </Alert>
+      </Snackbar>
+      <Box sx={{ position: "fixed", zIndex: "-1", bottom: 0 }}>
+        <ParallaxText baseVelocity={-3}>Amdaris Project </ParallaxText>
+        <ParallaxText baseVelocity={3}>Amdaris Project </ParallaxText>
       </Box>
     </AppContext.Provider>
   );

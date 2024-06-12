@@ -94,9 +94,9 @@ export default createTheme({
           "&:hover": {
             backgroundColor: alpha(definedColors.focus.main, definedColors.focus.hoverOpacity),
           },
-          "&.Mui-selected :hover": {
+          "&.Mui-selected:hover": {
             color: definedColors.focus.contrastText,
-            backgroundColor: alpha(definedColors.focus.main, definedColors.focus.activatedOpacity),
+            backgroundColor: alpha(definedColors.focus.main, definedColors.focus.hoverOpacity),
           },
         },
       },

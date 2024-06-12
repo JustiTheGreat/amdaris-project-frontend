@@ -62,7 +62,7 @@ export const useRequests = (setAlertMessage: (message: string) => void) => {
     path: string,
     method: "POST" | "GET" | "PUT" | "DELETE",
     callback?: (responseText: string) => void,
-    bodyContent?: object
+    requestBody?: object
   ) => {
     fetch(`${domain}${path}`, {
       method: method,
@@ -70,7 +70,7 @@ export const useRequests = (setAlertMessage: (message: string) => void) => {
         "Content-Type": "application/json",
         Authorization: `Bearer ${localStorage.getItem("token")}`,
       },
-      body: bodyContent ? JSON.stringify(bodyContent) : undefined,
+      body: requestBody ? JSON.stringify(requestBody) : undefined,
       mode: "cors",
     })
       .then(async (response) => {
@@ -187,7 +187,12 @@ export const useRequests = (setAlertMessage: (message: string) => void) => {
 
   const pointRequests = {
     addValueToPointRequest: (data: APRequestData, callback: (response: string) => void) =>
-      request(`${pointPath}/Match/${data.id}/Player/${data.auxId}`, "PUT", callback),
+      request(`${pointPath}/Match/${data.id}/Player/${data.auxId}`, "PUT", callback, data.requestBody),
+  };
+
+  const winRatingsRequests = {
+    getCompetitorWinRatingsRequest: (data: APRequestData, callback: (response: string) => void) =>
+      request(`${competitorPath}/getCompetitorWinRatings/${data.id}`, "GET", callback),
   };
 
   const createRequests = {
@@ -213,6 +218,7 @@ export const useRequests = (setAlertMessage: (message: string) => void) => {
     ...teamPlayersRequests,
     ...matchStatusRequests,
     ...pointRequests,
+    ...winRatingsRequests,
     ...createRequests,
   };
 };

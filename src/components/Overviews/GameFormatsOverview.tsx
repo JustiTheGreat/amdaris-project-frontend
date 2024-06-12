@@ -1,7 +1,7 @@
 import { AddCircleOutline as AddCircleOutlineIcon } from "@mui/icons-material";
 import { Box, IconButton, Tooltip } from "@mui/material";
 import { FC, useContext, useState } from "react";
-import { APRequestData, gameFormatPath } from "../../utils/PageConstants";
+import { APRequestData } from "../../utils/PageConstants";
 import { GameFormatGetDTO } from "../../utils/Types";
 import { UserRole } from "../../utils/UserRoles";
 import { GameFormatKeysProperties } from "../../utils/data";
@@ -48,7 +48,6 @@ export const GameFormatsOverview: FC = () => {
         staticItems={items}
         totalItems={totalItems}
         handleReloadHandler={getItems}
-        navigateOnClick={{ navigationBaseRoute: gameFormatPath }}
         toolbarActions={toolbarActions}
       />
     </Box>

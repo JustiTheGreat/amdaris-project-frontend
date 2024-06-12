@@ -21,7 +21,7 @@ export const AddPointDialog: FC<AddPointDialogProps> = ({
   const resetForm = () => setPointValue(1);
 
   const addValueToPoint = useCallback(() => {
-    requests.addValueToPointRequest({ id: matchId, auxId: playerId, requestsBody: pointValue }, (_: any) => {
+    requests.addValueToPointRequest({ id: matchId, auxId: playerId, requestBody: pointValue }, (_: any) => {
       handleReload();
       closeDialog();
       resetForm();

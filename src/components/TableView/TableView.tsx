@@ -15,7 +15,7 @@ import { useCallback, useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { APRequestData } from "../../utils/PageConstants";
 import { IdDTO, SortDirection } from "../../utils/Types";
-import { formatKeyToSpacedLowercase } from "../../utils/Utils";
+import { formatDate, formatKeyToSpacedLowercase } from "../../utils/Utils";
 import { KeysProperties, navigateOnRowAndKey } from "../../utils/data";
 import { AppContext } from "../App/App";
 import { TableViewHead } from "./TableViewHead/TableViewHead";
@@ -94,7 +94,9 @@ export const TableView = <T extends IdDTO>({
     () =>
       staticItems.map((row: any) => {
         let rowCells = tableProperties.keys.map((key) => (
-          <TableCell align="center">{navigateOnRowAndKey(row, key)}</TableCell>
+          <TableCell align="center">
+            {key.isDate ? formatDate(navigateOnRowAndKey(row, key)) : navigateOnRowAndKey(row, key)}
+          </TableCell>
         ));
 
         const finalCells = getRowActions ? [...rowCells, getRowActions(row)] : rowCells;

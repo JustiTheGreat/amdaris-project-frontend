@@ -105,25 +105,12 @@ export const Authentication: FC = () => {
         }}
       >
         <AuthenticationFormFieldContainer marginBottom="2rem">
-          {authenticationAction === AuthenticationAction.LOGIN ? (
-            <VisibilityAnimation>
-              <Typography
-                variant="h5"
-                sx={{ fontWeight: "bold" }}
-              >
-                {AuthenticationAction.LOGIN}
-              </Typography>
-            </VisibilityAnimation>
-          ) : (
-            <VisibilityAnimation>
-              <Typography
-                variant="h5"
-                sx={{ fontWeight: "bold" }}
-              >
-                {AuthenticationAction.REGISTER}
-              </Typography>
-            </VisibilityAnimation>
-          )}
+          <Typography
+            variant="h5"
+            sx={{ fontWeight: "bold" }}
+          >
+            <VisibilityAnimation key={authenticationAction}>{authenticationAction}</VisibilityAnimation>
+          </Typography>
           <ToggleButtonGroup
             exclusive
             value={authenticationAction}
@@ -231,7 +218,7 @@ export const Authentication: FC = () => {
             sx={{ width: "6rem" }}
             onClick={(_) => onSubmit()}
           >
-            {authenticationAction}
+            <VisibilityAnimation key={authenticationAction}>{authenticationAction}</VisibilityAnimation>
           </Button>
         </Box>
       </Box>

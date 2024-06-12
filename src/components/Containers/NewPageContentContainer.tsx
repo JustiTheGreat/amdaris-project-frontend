@@ -1,7 +1,9 @@
-import { Box, Tab, Tabs, Tooltip } from "@mui/material";
+import { Box, Tab, Tabs, Tooltip, useTheme } from "@mui/material";
 import { FC, useMemo, useRef, useState } from "react";
-import { useRefDimensions } from "../../utils/UseRefDimensions";
 import { Outlet } from "react-router-dom";
+import { useRefDimensions } from "../../utils/UseRefDimensions";
+import { HoverAnimation } from "../Animations/HoverAnimation";
+import { VisibilityAnimation } from "../Animations/VisibilityAnimation";
 
 export interface TabInfo {
   tooltip: string;
@@ -20,10 +22,9 @@ export const NewPageContentContainer: FC<NewPageContentContainerProps> = ({
   tabInfoList = [],
   children,
 }: NewPageContentContainerProps) => {
+  const theme = useTheme();
   const slidingContentContainerRef = useRef<Element>();
-
   const dimensions = useRefDimensions(slidingContentContainerRef);
-
   const isActive = (ti: TabInfo) => ti.content !== undefined && ti.content !== false;
   const activeTabInfoList = useMemo<TabInfo[]>(() => tabInfoList.filter(isActive), [tabInfoList]);
   const [tabInfo, setTabInfo] = useState<TabInfo | undefined>(activeTabInfoList[0]);
@@ -59,7 +60,7 @@ export const NewPageContentContainer: FC<NewPageContentContainerProps> = ({
             onChange={(_, value) => setTabInfo(tabInfoList[value])}
             textColor="secondary"
             indicatorColor="secondary"
-            // sx={{ position: "sticky", top: "0" }}
+            // sx={{ position: "sticky", top: "4rem" }}
           >
             {tabInfoList
               .filter((ti) => ti.icon)
@@ -68,12 +69,14 @@ export const NewPageContentContainer: FC<NewPageContentContainerProps> = ({
                   disabled={!isActive(ti)}
                   value={i}
                   icon={
-                    <Tooltip
-                      title={ti.tooltip}
-                      placement="left"
-                    >
-                      {ti.icon}
-                    </Tooltip>
+                    <HoverAnimation key={ti.tooltip}>
+                      <Tooltip
+                        title={ti.tooltip}
+                        placement="left"
+                      >
+                        {ti.icon}
+                      </Tooltip>
+                    </HoverAnimation>
                   }
                   sx={(theme) => ({ padding: theme.spacing(4, 0, 4, 0) })}
                 />
@@ -86,7 +89,6 @@ export const NewPageContentContainer: FC<NewPageContentContainerProps> = ({
         sx={{
           flex: 1,
           backgroundColor: "primary.light",
-          padding: (theme) => theme.spacing(2),
           borderTopRightRadius: 10,
           borderBottomRightRadius: 10,
           display: "flex",
@@ -95,10 +97,13 @@ export const NewPageContentContainer: FC<NewPageContentContainerProps> = ({
           justifyContent: children ? "center" : undefined,
         }}
       >
-        {children ? (
-          children
-        ) : tabInfoList.length === 0 ? (
-          <Outlet />
+        {children || tabInfoList.length === 0 ? (
+          <VisibilityAnimation
+            key={location.pathname}
+            style={{ flex: 1, padding: theme.spacing(2) }}
+          >
+            {children ? children : <Outlet />}
+          </VisibilityAnimation>
         ) : (
           <Box
             sx={{
@@ -118,18 +123,19 @@ export const NewPageContentContainer: FC<NewPageContentContainerProps> = ({
             }}
           >
             {activeTabInfoList.map((ti) => (
-              <Box
-                sx={{
+              <VisibilityAnimation
+                style={{
                   flex: 1,
                   display: "flex",
                   flexDirection: "column",
                   alignItems: "stretch",
                   justifyContent: "center",
-                  width: (theme) => `calc(${dimensions.width}px - ${theme.spacing(2)})`,
+                  padding: useTheme().spacing(2),
+                  width: `calc(${dimensions.width}px )`,
                 }}
               >
                 {ti.content}
-              </Box>
+              </VisibilityAnimation>
             ))}
           </Box>
         )}

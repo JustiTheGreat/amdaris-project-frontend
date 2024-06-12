@@ -5,13 +5,14 @@ import {
   InfoOutlined as InfoOutlinedIcon,
   Receipt as ReceiptIcon,
   Scoreboard as ScoreboardIcon,
+  Percent as PercentIcon,
 } from "@mui/icons-material";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import DoDisturbIcon from "@mui/icons-material/DoDisturb";
 import { Box, Button, IconButton, Tooltip, Typography } from "@mui/material";
 import { GridDeleteIcon } from "@mui/x-data-grid";
 import { FC, useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { useLocation, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { competitionPath, competitorPath, matchPath } from "../../utils/PageConstants";
 import {
   CompetitionDisplayDTO,
@@ -29,16 +30,17 @@ import {
   SpecialTeamPlayer,
   SpecialTeamPlayerKeysProperties,
   TeamKeysProperties,
+  WinRatingKeysProperties,
 } from "../../utils/data";
 import { AppContext } from "../App/App";
 import { RegisterTeamMemberDialog } from "../Dialogs/RegisterTeamMember";
-import { NewPageContentContainer, TabInfo } from "../PageContentContainer/NewPageContentContainer";
+import { NewPageContentContainer, TabInfo } from "../Containers/NewPageContentContainer";
 import { TableView } from "../TableView/TableView";
 
 export const CompetitorPage: FC = () => {
-  const location = useLocation();
   const { user, requests } = useContext(AppContext);
   const [competitor, setCompetitor] = useState<CompetitorGetDTO>();
+  const [winRatings, setWinRatings] = useState<any>();
   const { id } = useParams();
   const [dialogIsOpen, setDialogIsOpen] = useState<boolean>(false);
 
@@ -54,33 +56,43 @@ export const CompetitorPage: FC = () => {
   }, [competitor]);
 
   useEffect(() => {
-    getModel();
+    getData();
   }, [location.pathname]);
+
+  const getData = () => {
+    getModel();
+    getCompetitorWinRatings();
+  };
 
   const getModel = useCallback(() => requests.getCompetitorRequest({ id }, (data: any) => setCompetitor(data)), [id]);
 
+  const getCompetitorWinRatings = () =>
+    requests.getCompetitorWinRatingsRequest({ id }, (data: any) =>
+      setWinRatings(Object.entries(data).map(([key, value]) => ({ gameType: key, winRating: value })))
+    );
+
   const registerPlayerToTeamUser = useCallback(
-    () => requests.addPlayerToTeamUserRequest({ id }, (_: any) => getModel()),
+    () => requests.addPlayerToTeamUserRequest({ id }, (_: any) => getData()),
     [id]
   );
 
   const changeTeamPlayerStatusUser = useCallback(
-    () => requests.changeTeamPlayerStatusUserRequest({ id }, (_: any) => getModel()),
+    () => requests.changeTeamPlayerStatusUserRequest({ id }, (_: any) => getData()),
     [id]
   );
 
   const removePlayerFromTeamUser = useCallback(
-    () => requests.removePlayerFromTeamUserRequest({ id }, (_: any) => getModel()),
+    () => requests.removePlayerFromTeamUserRequest({ id }, (_: any) => getData()),
     [id]
   );
 
   const changeTeamPlayerStatusAdmin = useCallback(
-    (auxId: string) => requests.changeTeamPlayerStatusAdminRequest({ id, auxId }, (_: any) => getModel()),
+    (auxId: string) => requests.changeTeamPlayerStatusAdminRequest({ id, auxId }, (_: any) => getData()),
     [id]
   );
 
   const removePlayerFromTeamAdmin = useCallback(
-    (auxId: string) => requests.removePlayerFromTeamAdminRequest({ id, auxId }, (_: any) => getModel()),
+    (auxId: string) => requests.removePlayerFromTeamAdminRequest({ id, auxId }, (_: any) => getData()),
     [id]
   );
 
@@ -103,7 +115,13 @@ export const CompetitorPage: FC = () => {
       !isAdmin
         ? []
         : [
-            <Tooltip title={"Change status"}>
+            <Tooltip
+              title={
+                competitor?.teamPlayers.find((teamPlayer) => teamPlayer.playerId === row.id)?.isActive
+                  ? "Make inactive"
+                  : "Make active"
+              }
+            >
               <IconButton
                 onClick={(event) => {
                   event.stopPropagation();
@@ -111,9 +129,9 @@ export const CompetitorPage: FC = () => {
                 }}
               >
                 {competitor?.teamPlayers.find((teamPlayer) => teamPlayer.playerId === row.id)?.isActive ? (
-                  <DoDisturbIcon />
+                  <DoDisturbIcon color="warning" />
                 ) : (
-                  <CheckCircleOutlineIcon />
+                  <CheckCircleOutlineIcon color="success" />
                 )}
               </IconButton>
             </Tooltip>,
@@ -124,7 +142,7 @@ export const CompetitorPage: FC = () => {
                   removePlayerFromTeamAdmin(row.id);
                 }}
               >
-                <GridDeleteIcon />
+                <GridDeleteIcon color="error" />
               </IconButton>
             </Tooltip>,
           ],
@@ -200,6 +218,18 @@ export const CompetitorPage: FC = () => {
         ),
       });
     tabInfoList.push({
+      tooltip: "Win ratings",
+      icon: <PercentIcon fontSize="large" />,
+      content: (
+        <TableView<any>
+          tableName={"Win ratings"}
+          tableProperties={WinRatingKeysProperties}
+          dense
+          staticItems={winRatings}
+        />
+      ),
+    });
+    tabInfoList.push({
       tooltip: "Competitions",
       icon: <EmojiEventsIcon fontSize="large" />,
       content: (
@@ -227,7 +257,6 @@ export const CompetitorPage: FC = () => {
         <TableView<SpecialTeamPlayer>
           tableName={"Players"}
           tableProperties={SpecialTeamPlayerKeysProperties}
-          deletableEntries
           dense
           staticItems={(competitor as any as TeamGetDTO).players.map((player) => {
             return {
@@ -267,7 +296,7 @@ export const CompetitorPage: FC = () => {
         <RegisterTeamMemberDialog
           dialogIsOpen={dialogIsOpen}
           closeDialog={() => setDialogIsOpen(false)}
-          handleReload={getModel}
+          handleReload={getData}
           id={id}
         />
       )}
