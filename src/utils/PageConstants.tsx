@@ -200,8 +200,6 @@ export const useRequests = (setAlertMessage: (message: string) => void) => {
       request(createOneVSAllCompetitionPath, "POST", callback, data.requestBody),
     createTournamentCompetitionRequest: (data: APRequestData, callback: (response: string) => void) =>
       request(createTournamentCompetitionPath, "POST", callback, data.requestBody),
-    createPlayerRequest: (data: APRequestData, callback: (response: string) => void) =>
-      request(createPlayerPath, "POST", callback, data.requestBody),
     createTeamRequest: (data: APRequestData, callback: (response: string) => void) =>
       request(createTeamPath, "POST", callback, data.requestBody),
     createGameFormatRequest: (data: APRequestData, callback: (response: string) => void) =>

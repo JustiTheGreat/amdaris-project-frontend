@@ -64,6 +64,10 @@ export const Authentication: FC = () => {
       setAlertMessage("Username is required!");
       return;
     }
+    if (authenticationAction === AuthenticationAction.REGISTER && username.includes(" ")) {
+      setAlertMessage("Username must not contain white spaces!");
+      return;
+    }
     const authenticationData = { email, password, firstName, lastName, username };
     authenticationAction === AuthenticationAction.LOGIN
       ? requests.loginRequest({ requestBody: authenticationData }, proceed)

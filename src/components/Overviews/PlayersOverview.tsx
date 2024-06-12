@@ -6,7 +6,7 @@ import { CompetitorDisplayDTO } from "../../utils/Types";
 import { UserRole } from "../../utils/UserRoles";
 import { PlayerKeysProperties } from "../../utils/data";
 import { AppContext } from "../App/App";
-import { CreatePlayerDialog } from "../Dialogs/CreatePlayerDialog";
+import { RegisterUserDialog } from "../Dialogs/RegisterUserDialog";
 import { TableView } from "../TableView/TableView";
 
 export const PlayersOverview: FC = () => {
@@ -27,7 +27,7 @@ export const PlayersOverview: FC = () => {
       ? []
       : [
           <>
-            <CreatePlayerDialog
+            <RegisterUserDialog
               dialogIsOpen={createDialogIsOpen}
               closeDialog={() => setCreateDialogIsOpen(false)}
               handleReload={handleReload}
