@@ -15,10 +15,11 @@ export const GameFormatsOverview: FC = () => {
   const [totalItems, setTotalItems] = useState<number>(0);
   const [createDialogIsOpen, setCreateDialogIsOpen] = useState<boolean>(false);
 
-  const getItems = (requestData: APRequestData) => {
+  const getItems = (requestData: APRequestData, additionalCallback: () => void) => {
     requests.getGameFormatsRequest(requestData, (data: any) => {
       setItems(data.items);
       setTotalItems(data.total);
+      additionalCallback();
     });
   };
 
@@ -41,7 +42,7 @@ export const GameFormatsOverview: FC = () => {
         ];
 
   return (
-    <Box sx={{ flex: 1 }}>
+    <>
       <TableView<GameFormatGetDTO>
         tableName="Game formats"
         tableProperties={GameFormatKeysProperties}
@@ -50,6 +51,6 @@ export const GameFormatsOverview: FC = () => {
         handleReloadHandler={getItems}
         toolbarActions={toolbarActions}
       />
-    </Box>
+    </>
   );
 };

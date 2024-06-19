@@ -1,10 +1,10 @@
-// import "./styles.css";
 import { wrap } from "@motionone/utils";
 import { Box } from "@mui/material";
 import { motion, useAnimationFrame, useMotionValue, useTransform } from "framer-motion";
+import { ReactNode } from "react";
 
 interface ParallaxProps {
-  children: string;
+  children: ReactNode;
   baseVelocity: number;
 }
 

@@ -16,7 +16,7 @@ export const AppContainer: FC<AppContainerProps> = ({ center }: AppContainerProp
         flexDirection: "column",
         justifyContent: center ? "center" : "undefined",
         alignItems: center ? "center" : "stretch",
-        padding: (theme) => theme.spacing(5, 5, 25, 5),
+        padding: (theme) => theme.spacing(2, 2, 30, 2),
       }}
     >
       <Outlet />

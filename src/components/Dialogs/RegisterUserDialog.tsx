@@ -1,8 +1,9 @@
 import { Visibility, VisibilityOff } from "@mui/icons-material";
-import { IconButton, InputAdornment, TextField, Typography } from "@mui/material";
-import { FC, useContext, useState } from "react";
+import { Box, IconButton, InputAdornment, TextField } from "@mui/material";
+import { FC, useCallback, useContext, useState } from "react";
+import { useValidation } from "../../utils/UseValidation";
 import { AppContext } from "../App/App";
-import { AuthenticationFormFieldContainer } from "../Authentication/AuthenticationFormFieldContainer/AuthenticationFormFieldContainer";
+import { FormErrorMessage } from "../FormErrorMessage/FormErrorMessage";
 import { BaseDialogProps, DialogBase } from "./DialogBase";
 
 interface RegisterUserDialogProps extends BaseDialogProps {}
@@ -12,63 +13,81 @@ export const RegisterUserDialog: FC<RegisterUserDialogProps> = ({
   closeDialog,
   handleReload,
 }: RegisterUserDialogProps) => {
-  const { requests, setAlertMessage } = useContext(AppContext);
-  const [email, setEmail] = useState<string>("");
-  const [password, setPassword] = useState<string>("");
-  const [firstName, setFirstName] = useState<string>("");
-  const [lastName, setLastName] = useState<string>("");
-  const [username, setUsername] = useState<string>("");
+  const { requests } = useContext(AppContext);
   const [showPassword, setShowPassword] = useState<boolean>(false);
 
-  const registerUser = () => {
-    if (email.trim() === "") {
-      setAlertMessage("Email is required!");
-      return;
-    }
-    const emailIsValid = (email: string): boolean => /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email);
-    if (!emailIsValid(email)) {
-      setAlertMessage("Enter a valid email address!");
-      return;
-    }
-    if (password.trim() === "") {
-      setAlertMessage("Password is required!");
-      return;
-    }
-    if (firstName.trim() === "") {
-      setAlertMessage("First name is required!");
-      return;
-    }
-    if (lastName.trim() === "") {
-      setAlertMessage("Last name is required!");
-      return;
-    }
-    if (username.trim() === "") {
-      setAlertMessage("Username is required!");
-      return;
-    }
+  const email = "email";
+  const password = "password";
+  const firstName = "firstName";
+  const lastName = "lastName";
+  const username = "username";
 
-    if (username.includes(" ")) {
-      setAlertMessage("Username must not contain white spaces!");
-      return;
-    }
-    const authenticationData = { email, password, firstName, lastName, username };
-    requests.registerRequest({ requestBody: authenticationData }, () => {
+  const validation = useValidation(
+    [
+      {
+        name: email,
+        defaultValue: "",
+        conditions: [
+          { expression: (value: any) => value.trim() === "", errorMessage: "Email is required!" },
+          {
+            expression: (value: any) => !/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(value),
+            errorMessage: "Enter a valid email address!",
+          },
+        ],
+      },
+      {
+        name: password,
+        defaultValue: "",
+        conditions: [{ expression: (value: any) => value.trim() === "", errorMessage: "Password is required!" }],
+      },
+      {
+        name: firstName,
+        defaultValue: "",
+        conditions: [
+          {
+            expression: (value: any) => value.trim() === "",
+            errorMessage: "First name is required!",
+          },
+        ],
+      },
+      {
+        name: lastName,
+        defaultValue: "",
+        conditions: [
+          {
+            expression: (value: any) => value.trim() === "",
+            errorMessage: "Last name is required!",
+          },
+        ],
+      },
+      {
+        name: username,
+        defaultValue: "",
+        conditions: [
+          {
+            expression: (value: any) => value.trim() === "",
+            errorMessage: "Username is required!",
+          },
+          {
+            expression: (value: any) => value.trim().includes(" "),
+            errorMessage: "Username must not contain white spaces!",
+          },
+        ],
+      },
+    ],
+    []
+  );
+
+  const registerUser = useCallback(() => {
+    if (!validation.pass()) return;
+    const data = validation.getData();
+    requests.registerRequest({ requestBody: data }, () => {
       handleReload();
       closeDialog();
-      resetForm();
+      validation.reset();
     });
-  };
+  }, [validation]);
 
-  const resetForm = () => {
-    setEmail("");
-    setPassword("");
-    setFirstName("");
-    setLastName("");
-    setUsername("");
-  };
-
-  const fieldLabelWeight = "40";
-  const textfieldWeight = "60";
   return (
     <DialogBase
       title={"Register user as player"}
@@ -76,33 +95,29 @@ export const RegisterUserDialog: FC<RegisterUserDialogProps> = ({
       doAction={{ name: "Register", handle: registerUser }}
       handleClose={() => {
         closeDialog();
-        resetForm();
+        validation.reset();
       }}
     >
-      <AuthenticationFormFieldContainer>
-        <Typography sx={{ flex: fieldLabelWeight }}>Email address:</Typography>
+      <Box>
         <TextField
-          sx={{ flex: textfieldWeight }}
-          name="email"
+          fullWidth
           label="Email address"
-          type="email"
           required
           defaultValue={""}
-          value={email}
-          onChange={(event) => setEmail(event.currentTarget.value)}
+          error={Boolean(validation.errors[email]?.error)}
+          onChange={(event) => validation.setFieldValue(email, event.currentTarget.value)}
         />
-      </AuthenticationFormFieldContainer>
-      <AuthenticationFormFieldContainer>
-        <Typography sx={{ flex: fieldLabelWeight }}>Password:</Typography>
+        <FormErrorMessage>{validation.errors[email]?.error}</FormErrorMessage>
+      </Box>
+      <Box>
         <TextField
-          sx={{ flex: textfieldWeight }}
-          name="password"
+          fullWidth
           label="Password"
           type={showPassword ? "text" : "password"}
           required
           defaultValue={""}
-          value={password}
-          onChange={(event) => setPassword(event.currentTarget.value)}
+          error={Boolean(validation.errors[password]?.error)}
+          onChange={(event) => validation.setFieldValue(password, event.currentTarget.value)}
           InputProps={{
             endAdornment: (
               <InputAdornment position="end">
@@ -116,46 +131,41 @@ export const RegisterUserDialog: FC<RegisterUserDialogProps> = ({
             ),
           }}
         />
-      </AuthenticationFormFieldContainer>
-
-      <AuthenticationFormFieldContainer>
-        <Typography sx={{ flex: fieldLabelWeight }}>First name:</Typography>
+        <FormErrorMessage>{validation.errors[password]?.error}</FormErrorMessage>
+      </Box>
+      <Box>
         <TextField
-          sx={{ flex: textfieldWeight }}
-          name="firstName"
+          fullWidth
           label="First name"
           required
           defaultValue={""}
-          value={firstName}
-          onChange={(event) => setFirstName(event.currentTarget.value)}
+          error={Boolean(validation.errors[firstName]?.error)}
+          onChange={(event) => validation.setFieldValue(firstName, event.currentTarget.value)}
         />
-      </AuthenticationFormFieldContainer>
-
-      <AuthenticationFormFieldContainer>
-        <Typography sx={{ flex: fieldLabelWeight }}>Last name:</Typography>
+        <FormErrorMessage>{validation.errors[firstName]?.error}</FormErrorMessage>
+      </Box>
+      <Box>
         <TextField
-          sx={{ flex: textfieldWeight }}
-          name="lastName"
+          fullWidth
           label="Last name"
           required
           defaultValue={""}
-          value={lastName}
-          onChange={(event) => setLastName(event.currentTarget.value)}
+          error={Boolean(validation.errors[lastName]?.error)}
+          onChange={(event) => validation.setFieldValue(lastName, event.currentTarget.value)}
         />
-      </AuthenticationFormFieldContainer>
-
-      <AuthenticationFormFieldContainer>
-        <Typography sx={{ flex: fieldLabelWeight }}>Username:</Typography>
+        <FormErrorMessage>{validation.errors[lastName]?.error}</FormErrorMessage>
+      </Box>
+      <Box>
         <TextField
-          sx={{ flex: textfieldWeight }}
-          name="username"
+          fullWidth
           label="Username"
           required
           defaultValue={""}
-          value={username}
-          onChange={(event) => setUsername(event.currentTarget.value)}
+          error={Boolean(validation.errors[username]?.error)}
+          onChange={(event) => validation.setFieldValue(username, event.currentTarget.value)}
         />
-      </AuthenticationFormFieldContainer>
+        <FormErrorMessage>{validation.errors[username]?.error}</FormErrorMessage>
+      </Box>
     </DialogBase>
   );
 };

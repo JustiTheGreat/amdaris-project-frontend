@@ -1,9 +1,9 @@
-import { Box, Typography } from "@mui/material";
+import { Box, Typography, useTheme } from "@mui/material";
 import { FC } from "react";
 import { Link, Outlet } from "react-router-dom";
-import { NewPageContentContainer } from "../Containers/NewPageContentContainer";
 import { authenticationPath } from "../../utils/PageConstants";
 import { VisibilityAnimation } from "../Animations/VisibilityAnimation";
+import { NewPageContentContainer } from "../Containers/NewPageContentContainer";
 
 interface UnauthorizedContainerProps {
   unauthorizedAccess: boolean;
@@ -12,8 +12,9 @@ interface UnauthorizedContainerProps {
 export const UnauthorizedContainer: FC<UnauthorizedContainerProps> = ({
   unauthorizedAccess,
 }: UnauthorizedContainerProps) => {
+  const theme = useTheme();
   return (
-    <VisibilityAnimation>
+    <VisibilityAnimation style={{ display: "flex", flexDirection: "column", gap: theme.spacing(4) }}>
       {unauthorizedAccess ? (
         <NewPageContentContainer width="30rem">
           <Box

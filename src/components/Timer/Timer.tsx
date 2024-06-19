@@ -38,7 +38,7 @@ export const Timer: FC<TimerProps> = ({ untilDate }: TimerProps) => {
         padding: (theme) => theme.spacing(0, 2, 0, 2),
         borderRadius: 5,
         backgroundColor: "primary.main",
-        color: time.hours === 0 && time.minutes === 0 && time.seconds === 0 ? "error.main" : "primary.contrastText",
+        color: time.hours <= 0 && time.minutes <= 0 && time.seconds <= 0 ? "error.main" : "primary.contrastText",
         fontSize: "24px",
         height: "3rem",
       }}

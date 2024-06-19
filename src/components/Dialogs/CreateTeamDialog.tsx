@@ -1,6 +1,8 @@
-import { TextField } from "@mui/material";
-import { FC, useCallback, useContext, useState } from "react";
+import { Box, TextField } from "@mui/material";
+import { FC, useCallback, useContext } from "react";
+import { useValidation } from "../../utils/UseValidation";
 import { AppContext } from "../App/App";
+import { FormErrorMessage } from "../FormErrorMessage/FormErrorMessage";
 import { BaseDialogProps, DialogBase } from "./DialogBase";
 
 interface CreateTeamDialogProps extends BaseDialogProps {}
@@ -10,25 +12,30 @@ export const CreateTeamDialog: FC<CreateTeamDialogProps> = ({
   closeDialog,
   handleReload,
 }: CreateTeamDialogProps) => {
-  const { requests, setAlertMessage } = useContext(AppContext);
-  const [name, setName] = useState<string>("");
+  const { requests } = useContext(AppContext);
 
-  const resetForm = () => setName("");
+  const name = "name";
+
+  const validation = useValidation(
+    [
+      {
+        name: name,
+        defaultValue: "",
+        conditions: [{ expression: (value: any) => value.trim() === "", errorMessage: "Name is required!" }],
+      },
+    ],
+    []
+  );
 
   const createRequest = useCallback(() => {
-    if (name.trim() === "") {
-      setAlertMessage("Name is required!");
-      return;
-    }
-
-    const data = { name };
-
+    if (!validation.pass()) return;
+    const data = validation.getData();
     requests.createTeamRequest({ requestBody: data }, (_: any) => {
       handleReload();
       closeDialog();
-      resetForm();
+      validation.reset();
     });
-  }, [name]);
+  }, [validation]);
 
   return (
     <DialogBase
@@ -37,15 +44,20 @@ export const CreateTeamDialog: FC<CreateTeamDialogProps> = ({
       doAction={{ name: "Create", handle: createRequest }}
       handleClose={() => {
         closeDialog();
-        resetForm();
+        validation.reset();
       }}
     >
-      <TextField
-        label={"Team name"}
-        required
-        value={name}
-        onChange={(event) => setName(event.currentTarget.value)}
-      />
+      <Box>
+        <TextField
+          fullWidth
+          label={"Team name"}
+          required
+          value={validation.errors[name]?.value}
+          error={Boolean(validation.errors[name]?.error)}
+          onChange={(event) => validation.setFieldValue(name, event.currentTarget.value)}
+        />
+        <FormErrorMessage>{validation.errors[name]?.error}</FormErrorMessage>
+      </Box>
     </DialogBase>
   );
 };

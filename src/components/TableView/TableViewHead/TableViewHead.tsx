@@ -23,7 +23,12 @@ export const TableViewHead = <T extends IdDTO>({
 }: TableViewHeadProps<T>) => {
   return (
     <TableHead>
-      <TableRow>
+      <TableRow
+        sx={{
+          position: "sticky",
+          top: 0,
+        }}
+      >
         {keysOfT.map((keyOfT) => (
           <TableCell
             key={navigateOnKey(keyOfT)}

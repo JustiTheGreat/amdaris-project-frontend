@@ -15,10 +15,11 @@ export const CompetitionsOverview: FC = () => {
   const [totalItems, setTotalItems] = useState<number>(0);
   const [createDialogIsOpen, setCreateDialogIsOpen] = useState<boolean>(false);
 
-  const getItems = (requestData: APRequestData) => {
+  const getItems = (requestData: APRequestData, additionalCallback: () => void) => {
     requests.getCompetitionsRequest(requestData, (data: any) => {
       setItems(data.items);
       setTotalItems(data.total);
+      additionalCallback();
     });
   };
 
@@ -41,7 +42,7 @@ export const CompetitionsOverview: FC = () => {
         ];
 
   return (
-    <Box sx={{ flex: 1 }}>
+    <>
       <TableView<CompetitionDisplayDTO>
         tableName="Competitions"
         tableProperties={CompetitionKeysProperties}
@@ -51,6 +52,6 @@ export const CompetitionsOverview: FC = () => {
         navigateOnClick={{ navigationBaseRoute: competitionPath }}
         toolbarActions={toolbarActions}
       />
-    </Box>
+    </>
   );
 };

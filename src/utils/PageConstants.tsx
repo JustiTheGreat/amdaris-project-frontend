@@ -16,7 +16,6 @@ const pointPath: string = "Point";
 
 const createOneVSAllCompetitionPath = `${competitionPath}/${oneVSAllCompetitionPath}`;
 const createTournamentCompetitionPath = `${competitionPath}/${tournamentCompetitionPath}`;
-const createPlayerPath = `${competitorPath}/${playerPath}`;
 const createTeamPath = `${competitorPath}/${teamPath}`;
 const createGameFormatPath = `${gameFormatPath}`;
 
@@ -79,9 +78,12 @@ export const useRequests = (setAlertMessage: (message: string) => void) => {
             ? await response.json()
             : await response.text();
         if (response.status === 200 || response.status === 204) callback && callback(data);
-        else if (response.status === 401 || response.status === 403) {
-          setAlertMessage(data);
+        else if (response.status === 401) {
           navigate(authenticationPath);
+          setAlertMessage("Unauthorized!");
+        } else if (response.status === 403) {
+          navigate(authenticationPath);
+          setAlertMessage("Unauthorized!");
         } else if (response.status === 409) {
           setAlertMessage(data);
         } else setAlertMessage(data);
@@ -123,6 +125,8 @@ export const useRequests = (setAlertMessage: (message: string) => void) => {
       request(`${competitionPath}/GetCompetitionRanking/${data.id}`, "GET", callback),
     getCompetitionWinnersRequest: (data: APRequestData, callback: (response: string) => void) =>
       request(`${competitionPath}/GetCompetitionWinners/${data.id}`, "GET", callback),
+    SendDiplomasToCompetitionWinnersRequest: (data: APRequestData, callback: (response: string) => void) =>
+      request(`${competitionPath}/SendDiplomasToCompetitionWinners/${data.id}`, "GET", callback),
   };
 
   const competitionStatusRequests = {

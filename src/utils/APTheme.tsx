@@ -24,6 +24,8 @@ const red = "#FF0000";
 // const green = "#4caf50";
 const saffron = "#F3CA40";
 const gamboge = "#F2A541";
+const celestialBlue = "#0098D0";
+const paleAzure = "#85DEFF";
 
 const definedColors = {
   primary: {
@@ -36,7 +38,7 @@ const definedColors = {
     contrastText: purple,
   },
   focus: {
-    main: oldRose,
+    main: gamboge,
     contrastText: periwinkle,
     activatedOpacity: 0.4,
     hoverOpacity: 0.6,
@@ -51,17 +53,13 @@ export default createTheme({
     primary: {
       main: definedColors.primary.main,
       light: definedColors.primary.light,
+      contrastText: definedColors.primary.contrastText,
     },
     secondary: {
       main: definedColors.secondary.main,
     },
     error: {
       main: definedColors.error.main,
-    },
-    page: {
-      backgroundColor: {
-        main: definedColors.secondary.main,
-      },
     },
     text: {
       primary: definedColors.secondary.contrastText,
@@ -112,7 +110,25 @@ export default createTheme({
         h6: { fontWeight: "bold" },
       },
     },
-    MuiTableCell: { styleOverrides: { head: { fontWeight: "bold", padding: "0 1rem 0 0.5rem" } } },
+    MuiTableCell: {
+      styleOverrides: {
+        head: {
+          backgroundColor: definedColors.primary.main,
+          color: definedColors.primary.contrastText,
+          fontWeight: "bold",
+          padding: "0 1rem 0 0.5rem",
+          // "&hover": {
+          //   color: definedColors.primary.contrastText,
+          // },
+          // "&$active": {
+          //   color: definedColors.primary.contrastText,
+          // },
+          active: {
+            color: definedColors.primary.contrastText,
+          },
+        },
+      },
+    },
     MuiOutlinedInput: {
       styleOverrides: {
         root: {
@@ -151,6 +167,22 @@ export default createTheme({
           },
           "&.Mui-selected:hover": {
             backgroundColor: alpha(definedColors.focus.main, definedColors.focus.hoverOpacity),
+          },
+        },
+      },
+    },
+    MuiTableSortLabel: {
+      styleOverrides: {
+        root: {
+          color: definedColors.primary.contrastText,
+          "&:hover": {
+            color: definedColors.primary.contrastText,
+          },
+          "&.Mui-active": {
+            color: definedColors.primary.contrastText,
+          },
+          "&.Mui-active .MuiTableSortLabel-icon": {
+            color: definedColors.primary.contrastText,
           },
         },
       },

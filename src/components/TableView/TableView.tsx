@@ -25,7 +25,7 @@ interface TableViewProps<T extends IdDTO> {
   tableProperties: KeysProperties<T>;
   staticItems: T[];
   totalItems?: number;
-  handleReloadHandler?: (requestData: APRequestData) => void;
+  handleReloadHandler?: (requestData: APRequestData, additionalCallback?: () => void) => void;
   dense?: boolean;
   navigateOnClick?: { navigationBaseRoute: string };
   toolbarActions?: (dense: boolean, handleReload: () => void) => JSX.Element[];
@@ -37,7 +37,7 @@ export const TableView = <T extends IdDTO>({
   tableProperties,
   staticItems = [],
   totalItems = staticItems.length,
-  handleReloadHandler = () => {},
+  handleReloadHandler,
   dense = false,
   navigateOnClick,
   toolbarActions = () => [],
@@ -49,6 +49,7 @@ export const TableView = <T extends IdDTO>({
   const [sortKey, setSortKey] = useState<keyof T | "">(tableProperties.defaultSortKey);
   const [pageNumber, setPageNumber] = useState<number>(0);
   const [filterValue, setFilterValue] = useState<string>("");
+  const [loaded, setLoaded] = useState<boolean>(handleReloadHandler === undefined);
 
   useEffect(() => {
     setSortDirection(SortDirection.ASCENDING);
@@ -56,7 +57,7 @@ export const TableView = <T extends IdDTO>({
     setPageNumber(0);
     setFilterValue("");
     handleReload();
-  }, [user]); //TODO
+  }, [user]);
 
   useEffect(() => {
     handleReload();
@@ -81,7 +82,7 @@ export const TableView = <T extends IdDTO>({
       },
     };
 
-    handleReloadHandler({ requestBody: paginatedRequest });
+    handleReloadHandler && handleReloadHandler({ requestBody: paginatedRequest }, () => setLoaded(true));
   };
 
   const handleSort = (property: keyof T) => {
@@ -116,78 +117,80 @@ export const TableView = <T extends IdDTO>({
   );
 
   return (
-    <Box
-      sx={{
-        flex: 1,
-        display: "flex",
-        flexDirection: "column",
-        justifyContent: "center",
-      }}
-    >
-      <Toolbar>
-        <Typography
-          variant="h5"
-          sx={{ flex: 1 }}
-        >
-          {tableName}
-        </Typography>
-        {toolbarActions(dense, handleReload)}
-        {!dense && (
-          <TextField
-            type="search"
-            variant="standard"
-            sx={{ fontSize: "small", width: "20rem" }}
-            label={
-              <Box sx={{ display: "flex" }}>
-                <SearchIcon />
-                <Typography>{`Search by ${formatKeyToSpacedLowercase(
-                  tableProperties.filterKey.toString()
-                )}`}</Typography>
-              </Box>
-            }
-            onChange={(event) => setFilterValue(event.currentTarget.value)}
-          />
-        )}
-      </Toolbar>
-      <TableContainer
+    loaded && (
+      <Box
         sx={{
           flex: 1,
-          minHeight: (dense ? 2.5 : 3.7) * pageSize + "rem",
-          display: staticItems.length === 0 ? "flex" : undefined,
-          alignItems: staticItems.length === 0 ? "center" : undefined,
-          justifyContent: staticItems.length === 0 ? "center" : undefined,
+          height: "100%",
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "center",
         }}
       >
-        {staticItems.length === 0 ? (
-          <Typography variant="h6">No entries</Typography>
-        ) : (
-          <Table size={dense ? "small" : "medium"}>
-            <TableViewHead
-              sortDirection={sortDirection}
-              sortKey={sortKey}
-              handleSort={handleSort}
-              keysOfT={tableProperties.keys}
-              dense={dense}
-              haveActions={getRowActions({} as T).length !== 0}
+        <Toolbar>
+          <Typography
+            variant="h5"
+            sx={{ flex: 1 }}
+          >
+            {tableName}
+          </Typography>
+          {toolbarActions(dense, handleReload)}
+          {!dense && (
+            <TextField
+              type="search"
+              variant="standard"
+              sx={{ fontSize: "small", width: "20rem" }}
+              label={
+                <Box sx={{ display: "flex" }}>
+                  <SearchIcon />
+                  <Typography>{`Search by ${formatKeyToSpacedLowercase(
+                    tableProperties.filterKey.toString()
+                  )}`}</Typography>
+                </Box>
+              }
+              onChange={(event) => setFilterValue(event.currentTarget.value)}
             />
-            <TableBody>{getTableRows()}</TableBody>
-          </Table>
-        )}
-      </TableContainer>
-      {!dense && (
-        <TablePagination
-          component={"div"}
-          rowsPerPageOptions={[5, 10]}
-          count={totalItems}
-          page={pageNumber}
-          rowsPerPage={pageSize}
-          onPageChange={(_, newPage: number) => setPageNumber(newPage)}
-          onRowsPerPageChange={(event) => {
-            setPageNumber(0);
-            setPageSize(Number(event.target.value) as 5 | 10);
+          )}
+        </Toolbar>
+        <TableContainer
+          sx={{
+            flex: 1,
+            display: staticItems.length === 0 ? "flex" : undefined,
+            alignItems: staticItems.length === 0 ? "center" : undefined,
+            justifyContent: staticItems.length === 0 ? "center" : undefined,
           }}
-        />
-      )}
-    </Box>
+        >
+          {staticItems.length === 0 ? (
+            <Typography variant="h6">No entries</Typography>
+          ) : (
+            <Table size={dense ? "small" : "medium"}>
+              <TableViewHead
+                sortDirection={sortDirection}
+                sortKey={sortKey}
+                handleSort={handleSort}
+                keysOfT={tableProperties.keys}
+                dense={dense}
+                haveActions={getRowActions({} as T).length !== 0}
+              />
+              <TableBody>{getTableRows()}</TableBody>
+            </Table>
+          )}
+        </TableContainer>
+        {!dense && (
+          <TablePagination
+            component={"div"}
+            rowsPerPageOptions={[5, 10]}
+            count={totalItems}
+            page={pageNumber}
+            rowsPerPage={pageSize}
+            onPageChange={(_, newPage: number) => setPageNumber(newPage)}
+            onRowsPerPageChange={(event) => {
+              setPageNumber(0);
+              setPageSize(Number(event.target.value) as 5 | 10);
+            }}
+          />
+        )}
+      </Box>
+    )
   );
 };

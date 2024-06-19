@@ -87,7 +87,8 @@ export interface GetDTO extends IdDTO {}
 export interface CompetitionGetDTO extends GetDTO {
   name: string;
   location: string;
-  startTime: Date;
+  initialStartTime: Date;
+  actualizedStartTime: Date;
   status: CompetitionStatus;
   breakInMinutes: number | null;
   gameType: GameTypeGetDTO;
@@ -137,8 +138,10 @@ export interface GameTypeGetDTO extends GetDTO {
 
 export interface MatchGetDTO extends GetDTO {
   location: string;
-  startTime: Date | null;
-  endTime: Date | null;
+  initialStartTime: Date | null;
+  actualizedStartTime: Date | null;
+  initialEndTime: Date | null;
+  actualizedEndTime: Date | null;
   status: MatchStatus;
   competitorOne: CompetitorDisplayDTO;
   competitorTwo: CompetitorDisplayDTO;

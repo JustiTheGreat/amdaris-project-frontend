@@ -11,7 +11,7 @@ import {
   teamPath,
 } from "../../utils/PageConstants";
 import { UserRole } from "../../utils/UserRoles";
-import { formatCamelCaseToReadable } from "../../utils/Utils";
+import { AppName, formatCamelCaseToReadable } from "../../utils/Utils";
 import { HoverAnimation } from "../Animations/HoverAnimation";
 import { AppContext } from "../App/App";
 
@@ -56,10 +56,9 @@ export const NavigationBar: FC = () => {
           flexDirection: "row",
           alignItems: "center",
           justifyContent: "space-between",
-          gap: (theme) => theme.spacing(10),
+          gap: (theme) => theme.spacing(4),
           height: "4rem",
-          margin: (theme) => theme.spacing(0, 0, 8, 0),
-          borderRadius: 10,
+          borderRadius: (theme) => theme.spacing(4),
           position: "sticky",
           top: 0,
           zIndex: 1,
@@ -69,10 +68,10 @@ export const NavigationBar: FC = () => {
           variant="h5"
           sx={{ color: "primary.contrastText" }}
         >
-          APProject
+          {AppName}
         </Typography>
         <Tabs
-          value={navigationTab}
+          value={navigationTab ?? false}
           onChange={(_, value) => {
             setNavigationTab(value);
             navigate(`/${value}`);

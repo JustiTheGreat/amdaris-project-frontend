@@ -15,10 +15,11 @@ export const PlayersOverview: FC = () => {
   const [totalItems, setTotalItems] = useState<number>(0);
   const [createDialogIsOpen, setCreateDialogIsOpen] = useState<boolean>(false);
 
-  const getItems = (requestData: APRequestData) => {
+  const getItems = (requestData: APRequestData, additionalCallback: () => void) => {
     requests.getPlayersRequest(requestData, (data: any) => {
       setItems(data.items);
       setTotalItems(data.total);
+      additionalCallback();
     });
   };
 
@@ -41,7 +42,7 @@ export const PlayersOverview: FC = () => {
         ];
 
   return (
-    <Box sx={{ flex: 1 }}>
+    <>
       <TableView<CompetitorDisplayDTO>
         tableName="Players"
         tableProperties={PlayerKeysProperties}
@@ -51,6 +52,6 @@ export const PlayersOverview: FC = () => {
         navigateOnClick={{ navigationBaseRoute: competitorPath }}
         toolbarActions={toolbarActions}
       />
-    </Box>
+    </>
   );
 };

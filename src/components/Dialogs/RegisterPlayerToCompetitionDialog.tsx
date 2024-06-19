@@ -1,24 +1,24 @@
 import { Autocomplete, Box, TextField } from "@mui/material";
 import { FC, useCallback, useContext, useEffect, useState } from "react";
 import { CompetitionDisplayDTO } from "../../utils/Types";
+import { useValidation } from "../../utils/UseValidation";
 import { UserRole } from "../../utils/UserRoles";
 import { AppContext } from "../App/App";
-import { BaseDialogProps, DialogBase } from "./DialogBase";
-import { useValidation } from "../../utils/UseValidation";
 import { FormErrorMessage } from "../FormErrorMessage/FormErrorMessage";
+import { BaseDialogProps, DialogBase } from "./DialogBase";
 
-interface RegisterTeamMemberDialogProps extends BaseDialogProps {
+interface RegisterPlayerToCompetitionDialogProps extends BaseDialogProps {
   id: string;
   reloadDialogData: boolean;
 }
 
-export const RegisterTeamMemberDialog: FC<RegisterTeamMemberDialogProps> = ({
+export const RegisterPlayerToCompetitionDialog: FC<RegisterPlayerToCompetitionDialogProps> = ({
   dialogIsOpen,
   closeDialog,
   handleReload,
   id,
   reloadDialogData,
-}: RegisterTeamMemberDialogProps) => {
+}: RegisterPlayerToCompetitionDialogProps) => {
   const { user, requests } = useContext(AppContext);
   const [players, setPlayers] = useState<CompetitionDisplayDTO[]>([]);
 
@@ -37,20 +37,20 @@ export const RegisterTeamMemberDialog: FC<RegisterTeamMemberDialogProps> = ({
 
   useEffect(() => {
     if (user?.role !== UserRole.Administrator) return;
-    getPlayersNotInTeam();
+    getPlayersNotInCompetition();
   }, [reloadDialogData]);
 
   const resetForm = () => validation.setFieldValue(playerId, undefined);
 
-  const getPlayersNotInTeam = useCallback(
-    () => requests.getPlayersNotInTeamRequest({ id }, (data: any) => setPlayers(data)),
+  const getPlayersNotInCompetition = useCallback(
+    () => requests.getPlayersNotInCompetitionRequest({ id }, (data: any) => setPlayers(data)),
     [id]
   );
 
-  const addPlayerToTeam = useCallback(() => {
+  const registerPlayerRequest = useCallback(() => {
     if (!validation.pass()) return;
     const data = validation.getData();
-    requests.addPlayerToTeamAdminRequest({ id, auxId: data[playerId] }, (_: any) => {
+    requests.registerCompetitorToCompetitionAdminRequest({ id, auxId: data[playerId] }, (_: any) => {
       handleReload();
       closeDialog();
       resetForm();
@@ -59,9 +59,9 @@ export const RegisterTeamMemberDialog: FC<RegisterTeamMemberDialogProps> = ({
 
   return (
     <DialogBase
-      title={"Add team member"}
+      title={"Register player"}
       open={dialogIsOpen}
-      doAction={{ name: "Add", handle: addPlayerToTeam }}
+      doAction={{ name: "Register", handle: registerPlayerRequest }}
       handleClose={() => {
         closeDialog();
         resetForm();

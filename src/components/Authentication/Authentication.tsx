@@ -11,10 +11,12 @@ import {
 } from "@mui/material";
 import { FC, useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import authImage from "../../assets/authentication_image.jpeg";
 import { competitionPath } from "../../utils/PageConstants";
+import { useValidation } from "../../utils/UseValidation";
 import { VisibilityAnimation } from "../Animations/VisibilityAnimation";
 import { AppContext } from "../App/App";
-import { AuthenticationFormFieldContainer } from "./AuthenticationFormFieldContainer/AuthenticationFormFieldContainer";
+import { FormErrorMessage } from "../FormErrorMessage/FormErrorMessage";
 
 enum AuthenticationAction {
   LOGIN = "Login",
@@ -23,207 +25,240 @@ enum AuthenticationAction {
 
 export const Authentication: FC = () => {
   const navigate = useNavigate();
-  const { requests, setAlertMessage } = useContext(AppContext);
+  const { requests } = useContext(AppContext);
   const [authenticationAction, setAuthenticationAction] = useState<AuthenticationAction>(AuthenticationAction.LOGIN);
-  const [email, setEmail] = useState<string>("");
-  const [password, setPassword] = useState<string>("");
-  const [firstName, setFirstName] = useState<string>("");
-  const [lastName, setLastName] = useState<string>("");
-  const [username, setUsername] = useState<string>("");
   const [showPassword, setShowPassword] = useState<boolean>(false);
 
-  useEffect(() => resetForm(), [authenticationAction]);
+  const email = "email";
+  const password = "password";
+  const firstName = "firstName";
+  const lastName = "lastName";
+  const username = "username";
+
+  const validation = useValidation(
+    [
+      {
+        name: email,
+        defaultValue: "",
+        conditions: [
+          { expression: (value: any) => value.trim() === "", errorMessage: "Email is required!" },
+          {
+            expression: (value: any) => !/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(value),
+            errorMessage: "Enter a valid email address!",
+          },
+        ],
+      },
+      {
+        name: password,
+        defaultValue: "",
+        conditions: [{ expression: (value: any) => value.trim() === "", errorMessage: "Password is required!" }],
+      },
+      {
+        name: firstName,
+        defaultValue: "",
+        conditions: [
+          {
+            expression: (value: any) => authenticationAction === AuthenticationAction.REGISTER && value.trim() === "",
+            errorMessage: "First name is required!",
+          },
+        ],
+      },
+      {
+        name: lastName,
+        defaultValue: "",
+        conditions: [
+          {
+            expression: (value: any) => authenticationAction === AuthenticationAction.REGISTER && value.trim() === "",
+            errorMessage: "Last name is required!",
+          },
+        ],
+      },
+      {
+        name: username,
+        defaultValue: "",
+        conditions: [
+          {
+            expression: (value: any) => authenticationAction === AuthenticationAction.REGISTER && value.trim() === "",
+            errorMessage: "Username is required!",
+          },
+          {
+            expression: (value: any) =>
+              authenticationAction === AuthenticationAction.REGISTER && value.trim().includes(" "),
+            errorMessage: "Username must not contain white spaces!",
+          },
+        ],
+      },
+    ],
+    [authenticationAction]
+  );
 
   useEffect(() => {
     if (localStorage.getItem("token")) navigate(competitionPath); //TODO
   }, []);
 
   const onSubmit = () => {
-    if (email.trim() === "") {
-      setAlertMessage("Email is required!");
-      return;
-    }
-    const emailIsValid = (email: string): boolean => /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email);
-    if (!emailIsValid(email)) {
-      setAlertMessage("Enter a valid email address!");
-      return;
-    }
-    if (password.trim() === "") {
-      setAlertMessage("Password is required!");
-      return;
-    }
-    if (authenticationAction === AuthenticationAction.REGISTER && firstName.trim() === "") {
-      setAlertMessage("First name is required!");
-      return;
-    }
-    if (authenticationAction === AuthenticationAction.REGISTER && lastName.trim() === "") {
-      setAlertMessage("Last name is required!");
-      return;
-    }
-    if (authenticationAction === AuthenticationAction.REGISTER && username.trim() === "") {
-      setAlertMessage("Username is required!");
-      return;
-    }
-    if (authenticationAction === AuthenticationAction.REGISTER && username.includes(" ")) {
-      setAlertMessage("Username must not contain white spaces!");
-      return;
-    }
-    const authenticationData = { email, password, firstName, lastName, username };
+    if (!validation.pass()) return;
+    const data = validation.getData();
     authenticationAction === AuthenticationAction.LOGIN
-      ? requests.loginRequest({ requestBody: authenticationData }, proceed)
-      : requests.registerRequest({ requestBody: authenticationData }, proceed);
+      ? requests.loginRequest({ requestBody: data }, proceed)
+      : requests.registerRequest({ requestBody: data }, proceed);
   };
 
   const proceed = (token: string) => {
     localStorage.setItem("token", token);
     navigate(competitionPath);
-    resetForm();
   };
-
-  const resetForm = () => {
-    setEmail("");
-    setPassword("");
-    setFirstName("");
-    setLastName("");
-    setUsername("");
-  };
-
-  const fieldLabelWeight = "40";
-  const textfieldWeight = "60";
 
   return (
     <VisibilityAnimation>
       <Box
-        sx={(theme) => {
-          return {
-            width: "30rem",
-            height: "35rem",
-            backgroundColor: "primary.light",
-            padding: theme.spacing(3),
-            border: (theme) => `0.3rem solid ${theme.palette.primary.main}`,
-            borderRadius: 10,
-            display: "flex",
-            flexDirection: "column",
-            gap: theme.spacing(2),
-          };
+        sx={{
+          display: "flex",
+          backgroundColor: "primary.light",
+          borderRadius: (theme) => theme.spacing(6),
+          boxShadow: 20,
         }}
       >
-        <AuthenticationFormFieldContainer marginBottom="2rem">
-          <Typography
-            variant="h5"
-            sx={{ fontWeight: "bold" }}
-          >
-            <VisibilityAnimation key={authenticationAction}>{authenticationAction}</VisibilityAnimation>
-          </Typography>
-          <ToggleButtonGroup
-            exclusive
-            value={authenticationAction}
-            onChange={(_, value: AuthenticationAction) => (value ? setAuthenticationAction(value) : undefined)}
-          >
-            <ToggleButton value={AuthenticationAction.LOGIN}>
-              <LockOpen fontSize="medium" />
-            </ToggleButton>
-            <ToggleButton value={AuthenticationAction.REGISTER}>
-              <AppRegistration fontSize="medium" />
-            </ToggleButton>
-          </ToggleButtonGroup>
-        </AuthenticationFormFieldContainer>
-        <AuthenticationFormFieldContainer>
-          <Typography sx={{ flex: fieldLabelWeight }}>Email address:</Typography>
-          <TextField
-            sx={{ flex: textfieldWeight }}
-            name="email"
-            label="Email address"
-            type="email"
-            required
-            defaultValue={""}
-            value={email}
-            onChange={(event) => setEmail(event.currentTarget.value)}
-          />
-        </AuthenticationFormFieldContainer>
-        <AuthenticationFormFieldContainer>
-          <Typography sx={{ flex: fieldLabelWeight }}>Password:</Typography>
-          <TextField
-            sx={{ flex: textfieldWeight }}
-            name="password"
-            label="Password"
-            type={showPassword ? "text" : "password"}
-            required
-            defaultValue={""}
-            value={password}
-            onChange={(event) => setPassword(event.currentTarget.value)}
-            InputProps={{
-              endAdornment: (
-                <InputAdornment position="end">
-                  <IconButton
-                    onClick={(_) => setShowPassword(!showPassword)}
-                    edge="end"
-                  >
-                    {showPassword ? <VisibilityOff /> : <Visibility />}
-                  </IconButton>
-                </InputAdornment>
-              ),
+        <Box
+          sx={{
+            width: "15rem",
+            backgroundImage: `url(${authImage})`,
+            backgroundSize: "cover",
+            borderTopLeftRadius: (theme) => theme.spacing(6),
+            borderBottomLeftRadius: (theme) => theme.spacing(6),
+          }}
+        />
+        <Box
+          sx={(theme) => {
+            return {
+              width: "20rem",
+              height: "37rem",
+              backgroundColor: "primary.light",
+              padding: theme.spacing(3),
+              display: "flex",
+              flexDirection: "column",
+              gap: theme.spacing(2),
+              borderTopRightRadius: (theme) => theme.spacing(6),
+              borderBottomRightRadius: (theme) => theme.spacing(6),
+            };
+          }}
+        >
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              marginBottom: (theme) => theme.spacing(2),
             }}
-          />
-        </AuthenticationFormFieldContainer>
-
-        {authenticationAction === AuthenticationAction.REGISTER && (
-          <VisibilityAnimation>
-            <AuthenticationFormFieldContainer>
-              <Typography sx={{ flex: fieldLabelWeight }}>First name:</Typography>
+          >
+            <Typography
+              variant="h5"
+              sx={{ fontWeight: "bold" }}
+            >
+              <VisibilityAnimation key={authenticationAction}>{authenticationAction}</VisibilityAnimation>
+            </Typography>
+            <ToggleButtonGroup
+              exclusive
+              value={authenticationAction}
+              onChange={(_, value: AuthenticationAction) => (value ? setAuthenticationAction(value) : undefined)}
+            >
+              <ToggleButton value={AuthenticationAction.LOGIN}>
+                <LockOpen fontSize="medium" />
+              </ToggleButton>
+              <ToggleButton value={AuthenticationAction.REGISTER}>
+                <AppRegistration fontSize="medium" />
+              </ToggleButton>
+            </ToggleButtonGroup>
+          </Box>
+          <Box>
+            <TextField
+              fullWidth
+              label="Email address"
+              required
+              defaultValue={""}
+              value={validation.errors[email]?.value}
+              error={Boolean(validation.errors[email]?.error)}
+              onChange={(event) => validation.setFieldValue(email, event.currentTarget.value)}
+            />
+            <FormErrorMessage>{validation.errors[email]?.error}</FormErrorMessage>
+          </Box>
+          <Box>
+            <TextField
+              fullWidth
+              label="Password"
+              type={showPassword ? "text" : "password"}
+              required
+              defaultValue={""}
+              value={validation.errors[password]?.value}
+              error={Boolean(validation.errors[password]?.error)}
+              onChange={(event) => validation.setFieldValue(password, event.currentTarget.value)}
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton
+                      onClick={(_) => setShowPassword(!showPassword)}
+                      edge="end"
+                    >
+                      {showPassword ? <VisibilityOff /> : <Visibility />}
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              }}
+            />
+            <FormErrorMessage>{validation.errors[password]?.error}</FormErrorMessage>
+          </Box>
+          {authenticationAction === AuthenticationAction.REGISTER && (
+            <VisibilityAnimation>
               <TextField
-                sx={{ flex: textfieldWeight }}
-                name="firstName"
+                fullWidth
                 label="First name"
                 required
                 defaultValue={""}
-                value={firstName}
-                onChange={(event) => setFirstName(event.currentTarget.value)}
+                value={validation.errors[firstName]?.value}
+                error={Boolean(validation.errors[firstName]?.error)}
+                onChange={(event) => validation.setFieldValue(firstName, event.currentTarget.value)}
               />
-            </AuthenticationFormFieldContainer>
-          </VisibilityAnimation>
-        )}
-        {authenticationAction === AuthenticationAction.REGISTER && (
-          <VisibilityAnimation>
-            <AuthenticationFormFieldContainer>
-              <Typography sx={{ flex: fieldLabelWeight }}>Last name:</Typography>
+              <FormErrorMessage>{validation.errors[firstName]?.error}</FormErrorMessage>
+            </VisibilityAnimation>
+          )}
+          {authenticationAction === AuthenticationAction.REGISTER && (
+            <VisibilityAnimation>
               <TextField
-                sx={{ flex: textfieldWeight }}
-                name="lastName"
+                fullWidth
                 label="Last name"
                 required
                 defaultValue={""}
-                value={lastName}
-                onChange={(event) => setLastName(event.currentTarget.value)}
+                value={validation.errors[lastName]?.value}
+                error={Boolean(validation.errors[lastName]?.error)}
+                onChange={(event) => validation.setFieldValue(lastName, event.currentTarget.value)}
               />
-            </AuthenticationFormFieldContainer>
-          </VisibilityAnimation>
-        )}
-        {authenticationAction === AuthenticationAction.REGISTER && (
-          <VisibilityAnimation>
-            <AuthenticationFormFieldContainer>
-              <Typography sx={{ flex: fieldLabelWeight }}>Username:</Typography>
+              <FormErrorMessage>{validation.errors[lastName]?.error}</FormErrorMessage>
+            </VisibilityAnimation>
+          )}
+          {authenticationAction === AuthenticationAction.REGISTER && (
+            <VisibilityAnimation>
               <TextField
-                sx={{ flex: textfieldWeight }}
-                name="username"
+                fullWidth
                 label="Username"
                 required
                 defaultValue={""}
-                value={username}
-                onChange={(event) => setUsername(event.currentTarget.value)}
+                value={validation.errors[username]?.value}
+                error={Boolean(validation.errors[username]?.error)}
+                onChange={(event) => validation.setFieldValue(username, event.currentTarget.value)}
               />
-            </AuthenticationFormFieldContainer>
-          </VisibilityAnimation>
-        )}
+              <FormErrorMessage>{validation.errors[username]?.error}</FormErrorMessage>
+            </VisibilityAnimation>
+          )}
 
-        <Box sx={{ flex: 1 }} />
-        <Box sx={{ display: "flex", justifyContent: "center" }}>
-          <Button
-            sx={{ width: "6rem" }}
-            onClick={(_) => onSubmit()}
-          >
-            <VisibilityAnimation key={authenticationAction}>{authenticationAction}</VisibilityAnimation>
-          </Button>
+          <Box sx={{ flex: 1 }} />
+          <Box sx={{ display: "flex", justifyContent: "center" }}>
+            <Button
+              sx={{ width: "6rem" }}
+              onClick={(_) => onSubmit()}
+            >
+              <VisibilityAnimation key={authenticationAction}>{authenticationAction}</VisibilityAnimation>
+            </Button>
+          </Box>
         </Box>
       </Box>
     </VisibilityAnimation>

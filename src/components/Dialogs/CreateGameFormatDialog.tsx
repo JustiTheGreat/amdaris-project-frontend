@@ -1,9 +1,11 @@
 import { Autocomplete, Box, Checkbox, FormControlLabel, MenuItem, TextField } from "@mui/material";
-import { FC, useCallback, useContext, useEffect, useState } from "react";
+import { FC, useCallback, useContext, useEffect, useRef, useState } from "react";
 import { PaginatedRequest } from "../../utils/PageConstants";
 import { CompetitorType, GameTypeGetDTO, SortDirection } from "../../utils/Types";
+import { useValidation } from "../../utils/UseValidation";
 import { UserRole } from "../../utils/UserRoles";
 import { AppContext } from "../App/App";
+import { FormErrorMessage } from "../FormErrorMessage/FormErrorMessage";
 import { BaseDialogProps, DialogBase } from "./DialogBase";
 
 interface CreateGameFormatDialogProps extends BaseDialogProps {}
@@ -13,31 +15,86 @@ export const CreateGameFormatDialog: FC<CreateGameFormatDialogProps> = ({
   closeDialog,
   handleReload,
 }: CreateGameFormatDialogProps) => {
-  const { user, requests, setAlertMessage } = useContext(AppContext);
-  const [name, setName] = useState<string>("");
-  const [gameType, setGameType] = useState<string>("");
-  const [competitorType, setCompetitorType] = useState<CompetitorType>();
-  const [teamSize, setTeamSize] = useState<number | null>(null);
-  const [winAt, setWinAt] = useState<number | null>(null);
+  const { user, requests } = useContext(AppContext);
+  const [oldTeamSize, setOldTeamSize] = useState<number>(2);
   const [oldWinAt, setOldWinAt] = useState<number>(1);
-  const [durationInMinutes, setDurationInMinutes] = useState<number | null>(null);
   const [oldDurationInMinutes, setOldDurationInMinutes] = useState<number>(1);
   const [gameTypeList, setGameTypeList] = useState<GameTypeGetDTO[]>([]);
   const [filter, setFilter] = useState("");
+  const durationInMinutesCheckbox = useRef<any>();
 
-  useEffect(() => (winAt ? setOldWinAt(winAt) : undefined), [winAt]);
+  const name = "name";
+  const gameType = "gameType";
+  const competitorType = "competitorType";
+  const teamSize = "teamSize";
+  const winAt = "winAt";
+  const durationInMinutes = "durationInMinutes";
 
-  useEffect(() => (durationInMinutes ? setOldDurationInMinutes(durationInMinutes) : undefined), [durationInMinutes]);
+  const validation = useValidation(
+    [
+      {
+        name: name,
+        defaultValue: "",
+        conditions: [{ expression: (value: any) => value.trim() === "", errorMessage: "Name is required!" }],
+      },
+      {
+        name: gameType,
+        defaultValue: undefined,
+        conditions: [{ expression: (value: any) => value === undefined, errorMessage: "Choose a game type!" }],
+      },
+      {
+        name: competitorType,
+        defaultValue: undefined,
+        conditions: [
+          {
+            expression: (value: any) => value === undefined,
+            errorMessage: "Choose the competitor type!",
+          },
+        ],
+      },
+      {
+        name: teamSize,
+        defaultValue: null,
+        conditions: [],
+      },
+      {
+        name: winAt,
+        defaultValue: null,
+        conditions: [],
+      },
+      {
+        name: durationInMinutes,
+        defaultValue: null,
+        conditions: [],
+      },
+    ],
+    []
+  );
+  const [atLeastOneMatchWinCriteriaIsSelected, setAtLeastOneMatchWinCriteriaIsSelected] = useState<boolean>(true);
+
+  useEffect(
+    () => (validation.errors[teamSize]?.value ? setOldTeamSize(validation.errors[teamSize]?.value) : undefined),
+    [validation.errors[teamSize]?.value]
+  );
+
+  useEffect(
+    () => (validation.errors[winAt]?.value ? setOldWinAt(validation.errors[winAt]?.value) : undefined),
+    [validation.errors[winAt]?.value]
+  );
+
+  useEffect(
+    () =>
+      validation.errors[durationInMinutes]?.value
+        ? setOldDurationInMinutes(validation.errors[durationInMinutes]?.value)
+        : undefined,
+    [validation.errors[durationInMinutes]?.value]
+  );
 
   useEffect(() => getGameTypeList(), [filter]);
 
   const resetForm = () => {
-    setName("");
-    setGameType("");
-    setCompetitorType(undefined);
-    setTeamSize(null);
-    setWinAt(null);
-    setDurationInMinutes(null);
+    validation.reset();
+    setOldTeamSize(2);
     setOldWinAt(1);
     setOldDurationInMinutes(1);
   };
@@ -65,38 +122,14 @@ export const CreateGameFormatDialog: FC<CreateGameFormatDialogProps> = ({
   };
 
   const createRequest = useCallback(() => {
-    if (name.trim() === "") {
-      setAlertMessage("Name is required!");
-      return;
-    }
-
-    if (gameType.trim() === "") {
-      setAlertMessage("Choose the type of the game!");
-      return;
-    }
-
-    if (competitorType === undefined) {
-      setAlertMessage("Choose the type of the competitor!");
-      return;
-    }
-
-    if (competitorType === CompetitorType.TEAM && teamSize === null) {
-      setAlertMessage("Choose the size of a team!");
-      return;
-    }
-
-    if (!winAt && !durationInMinutes) {
-      setAlertMessage("Choose at least one match end criteria: score or duration!");
-      return;
-    }
-
+    console.log(validation.errors[winAt].value, validation.errors[durationInMinutes].value);
+    const atLeastOneMatchWinCriteriaIsSelected =
+      validation.errors[winAt]?.value !== null || validation.errors[durationInMinutes]?.value !== null;
+    if (!atLeastOneMatchWinCriteriaIsSelected) setAtLeastOneMatchWinCriteriaIsSelected(false);
+    if (!validation.pass() || !atLeastOneMatchWinCriteriaIsSelected) return;
     const data = {
-      name,
-      gameType,
-      competitorType: competitorType === CompetitorType.PLAYER ? 0 : 1,
-      teamSize,
-      winAt,
-      durationInMinutes,
+      ...validation.getData(),
+      [competitorType]: validation.errors[competitorType].value === CompetitorType.PLAYER ? 0 : 1,
     };
 
     requests.createGameFormatRequest({ requestBody: data }, (_: any) => {
@@ -104,7 +137,7 @@ export const CreateGameFormatDialog: FC<CreateGameFormatDialogProps> = ({
       closeDialog();
       resetForm();
     });
-  }, [name, gameType, competitorType, teamSize, winAt, durationInMinutes]);
+  }, [validation]);
 
   return (
     <DialogBase
@@ -116,101 +149,142 @@ export const CreateGameFormatDialog: FC<CreateGameFormatDialogProps> = ({
         resetForm();
       }}
     >
-      <TextField
-        label={"Game format name"}
-        required
-        value={name}
-        onChange={(event) => setName(event.currentTarget.value)}
-      />
-      <Autocomplete
-        disablePortal
-        autoHighlight
-        options={gameTypeList}
-        getOptionLabel={(gameType) => gameType.name}
-        filterOptions={(x) => x}
-        onChange={(_, value) => setGameType(value ? value.id : "")}
-        renderInput={(params) => (
-          <TextField
-            {...params}
-            label="Game type"
-            required
-            onChange={(event) => setFilter(event.currentTarget.value)}
-          />
-        )}
-      />
-      <TextField
-        select
-        label={"Competitor type"}
-        required
-        onChange={(event) => setCompetitorType(event.target.value as CompetitorType)}
-      >
-        <MenuItem value={CompetitorType.PLAYER}>{CompetitorType.PLAYER}</MenuItem>
-        <MenuItem value={CompetitorType.TEAM}>{CompetitorType.TEAM}</MenuItem>
-      </TextField>
-      <TextField
-        type="number"
-        label={"Team size"}
-        required
-        disabled={competitorType != CompetitorType.TEAM}
-        value={teamSize}
-        onChange={(event) => {
-          const number = Number(event.currentTarget.value);
-          setTeamSize(number < 2 ? 2 : number);
-        }}
-      />
-      <Box sx={{ display: "flex" }}>
-        <FormControlLabel
-          sx={{ flex: 1 }}
-          control={
-            <Checkbox
-              value={Boolean(winAt)}
-              onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-                setWinAt(event.currentTarget.checked ? oldWinAt : null)
-              }
-            />
-          }
-          label={"Win match at score"}
-        />
+      <Box>
         <TextField
-          sx={{ flex: 1 }}
-          type="number"
-          label={"Win match at score"}
+          fullWidth
+          label={"Game format name"}
           required
-          disabled={!Boolean(winAt)}
-          defaultValue={1}
-          value={oldWinAt}
-          onChange={(event) => {
-            const number = Number(event.currentTarget.value);
-            setWinAt(number < 1 ? 1 : number);
-          }}
+          value={validation.errors[name]?.value}
+          error={Boolean(validation.errors[name]?.error)}
+          onChange={(event) => validation.setFieldValue(name, event.currentTarget.value)}
         />
+        <FormErrorMessage>{validation.errors[name]?.error}</FormErrorMessage>
       </Box>
-      <Box sx={{ display: "flex" }}>
-        <FormControlLabel
-          sx={{ flex: 1 }}
-          control={
-            <Checkbox
-              value={Boolean(durationInMinutes)}
-              onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-                setDurationInMinutes(event.currentTarget.checked ? oldDurationInMinutes : null)
-              }
+      <Box>
+        <Autocomplete
+          fullWidth
+          autoHighlight
+          options={gameTypeList}
+          getOptionLabel={(gameType) => gameType.name ?? ""}
+          filterOptions={(x) => x}
+          onChange={(_, value) => validation.setFieldValue(gameType, value ? value.id : undefined)}
+          renderInput={(params) => (
+            <TextField
+              {...params}
+              label="Game type"
+              required
+              value={filter}
+              error={Boolean(validation.errors[gameType]?.error)}
+              onChange={(event) => setFilter(event.currentTarget.value)}
             />
-          }
-          label={"Timed matches"}
+          )}
         />
-        <TextField
-          sx={{ flex: 1 }}
-          type="number"
-          label={"Match duration (min)"}
-          required
-          disabled={!Boolean(durationInMinutes)}
-          defaultValue={1}
-          value={oldDurationInMinutes}
-          onChange={(event) => {
-            const number = Number(event.currentTarget.value);
-            setDurationInMinutes(number < 1 ? 1 : number);
-          }}
-        />
+        <FormErrorMessage>{validation.errors[gameType]?.error}</FormErrorMessage>
+      </Box>
+      <Box>
+        <Box sx={{ display: "flex", gap: (theme) => theme.spacing(1) }}>
+          <TextField
+            sx={{ flex: 1 }}
+            select
+            label={"Competitor type"}
+            required
+            error={Boolean(validation.errors[competitorType]?.error)}
+            onChange={(event) => {
+              validation.setFieldValues([
+                { field: competitorType, value: event.target.value },
+                {
+                  field: teamSize,
+                  value: validation.errors[teamSize]?.value ? oldTeamSize : null,
+                },
+              ]);
+            }}
+          >
+            <MenuItem value={CompetitorType.PLAYER}>{CompetitorType.PLAYER}</MenuItem>
+            <MenuItem value={CompetitorType.TEAM}>{CompetitorType.TEAM}</MenuItem>
+          </TextField>
+          <TextField
+            sx={{ flex: 1 }}
+            type="number"
+            label={"Team size"}
+            required
+            disabled={validation.errors[competitorType]?.value != CompetitorType.TEAM}
+            value={oldTeamSize}
+            error={Boolean(validation.errors[teamSize]?.error)}
+            onChange={(event) => {
+              const number = Number(event.currentTarget.value);
+              validation.setFieldValue(teamSize, number < 2 ? 2 : number);
+            }}
+          />
+        </Box>
+        <FormErrorMessage>{validation.errors[competitorType]?.error}</FormErrorMessage>
+      </Box>
+      <Box>
+        <Box sx={{ display: "flex", gap: (theme) => theme.spacing(1) }}>
+          <FormControlLabel
+            sx={{ flex: 1 }}
+            control={
+              <Checkbox
+                value={Boolean(validation.errors[winAt]?.value)}
+                onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+                  validation.setFieldValue(winAt, event.currentTarget.checked ? oldWinAt : null);
+                  setAtLeastOneMatchWinCriteriaIsSelected(true);
+                }}
+              />
+            }
+            label={"Win match at score"}
+            color={Boolean(validation.errors[winAt]?.error) ? "error.main" : "primary.main"}
+          />
+          <TextField
+            sx={{ flex: 1 }}
+            type="number"
+            label={"Win match at score"}
+            required
+            disabled={!Boolean(validation.errors[winAt]?.value)}
+            defaultValue={1}
+            value={oldWinAt}
+            onChange={(event) => {
+              const number = Number(event.currentTarget.value);
+              validation.setFieldValue(winAt, number < 1 ? 1 : number);
+            }}
+          />
+        </Box>
+      </Box>
+      <Box>
+        <Box sx={{ display: "flex", gap: (theme) => theme.spacing(1) }}>
+          <FormControlLabel
+            sx={{ flex: 1 }}
+            control={
+              <Checkbox
+                ref={durationInMinutesCheckbox}
+                value={Boolean(validation.errors[durationInMinutes]?.value)}
+                onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+                  validation.setFieldValue(
+                    durationInMinutes,
+                    event.currentTarget.checked ? oldDurationInMinutes : null
+                  );
+                  setAtLeastOneMatchWinCriteriaIsSelected(true);
+                }}
+              />
+            }
+            label={"Timed matches"}
+          />
+          <TextField
+            sx={{ flex: 1 }}
+            type="number"
+            label={"Match duration (min)"}
+            required
+            disabled={!Boolean(validation.errors[durationInMinutes]?.value)}
+            defaultValue={1}
+            value={oldDurationInMinutes}
+            onChange={(event) => {
+              const number = Number(event.currentTarget.value);
+              validation.setFieldValue(durationInMinutes, number < 1 ? 1 : number);
+            }}
+          />
+        </Box>
+        <FormErrorMessage>
+          {!atLeastOneMatchWinCriteriaIsSelected ? "Choose at least one match win criteria!" : ""}
+        </FormErrorMessage>
       </Box>
     </DialogBase>
   );

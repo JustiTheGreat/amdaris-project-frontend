@@ -11,7 +11,7 @@ import {
   teamPath,
   useRequests,
 } from "../../utils/PageConstants";
-import { getUserObjectFromToken } from "../../utils/Utils";
+import { AppName, getUserObjectFromToken } from "../../utils/Utils";
 import { VisibilityAnimation } from "../Animations/VisibilityAnimation";
 import { Authentication } from "../Authentication/Authentication";
 import { AppContainer } from "../Containers/AppContainer";
@@ -105,7 +105,7 @@ export const App: FC = () => {
           />
         </Route>
 
-        <Route element={<AppContainer />}>
+        <Route element={<AppContainer center={unauthorizedAccess} />}>
           <Route element={<UnauthorizedContainer unauthorizedAccess={unauthorizedAccess} />}>
             <Route element={<NavigationBar />}>
               <Route element={<NewPageContentContainer />}>
@@ -158,8 +158,8 @@ export const App: FC = () => {
         </Alert>
       </Snackbar>
       <Box sx={{ position: "fixed", zIndex: "-1", bottom: 0 }}>
-        <ParallaxText baseVelocity={-3}>Amdaris Project </ParallaxText>
-        <ParallaxText baseVelocity={3}>Amdaris Project </ParallaxText>
+        <ParallaxText baseVelocity={-3}>{AppName} </ParallaxText>
+        <ParallaxText baseVelocity={3}>{AppName} </ParallaxText>
       </Box>
     </AppContext.Provider>
   );

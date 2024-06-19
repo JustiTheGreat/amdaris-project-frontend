@@ -1,11 +1,13 @@
-import { Autocomplete, MenuItem, TextField } from "@mui/material";
+import { Autocomplete, Box, MenuItem, TextField } from "@mui/material";
 import { DateTimePicker } from "@mui/x-date-pickers";
-import dayjs, { Dayjs } from "dayjs";
+import dayjs from "dayjs";
 import { FC, useCallback, useContext, useEffect, useState } from "react";
 import { PaginatedRequest } from "../../utils/PageConstants";
 import { CompetitionType, GameFormatGetDTO, SortDirection } from "../../utils/Types";
+import { useValidation } from "../../utils/UseValidation";
 import { UserRole } from "../../utils/UserRoles";
 import { AppContext } from "../App/App";
+import { FormErrorMessage } from "../FormErrorMessage/FormErrorMessage";
 import { BaseDialogProps, DialogBase } from "./DialogBase";
 
 interface CreateCompetitionDialogProps extends BaseDialogProps {}
@@ -15,29 +17,74 @@ export const CreateCompetitionDialog: FC<CreateCompetitionDialogProps> = ({
   closeDialog,
   handleReload,
 }: CreateCompetitionDialogProps) => {
-  const { user, requests, setAlertMessage } = useContext(AppContext);
-  const [name, setName] = useState<string>("");
-  const [location, setLocation] = useState<string>("");
-  const [startTime, setStartTime] = useState<Dayjs | null>(dayjs(new Date()));
-  const [gameFormat, setGameFormat] = useState<GameFormatGetDTO>();
-  const [breakInMinutes, setBreakInMinutes] = useState<number | null>(null);
+  const { user, requests } = useContext(AppContext);
   const [oldBreakInMinutes, setOldBreakInMinutes] = useState<number>(1);
-  const [competitionType, setCompetitionType] = useState<CompetitionType>();
   const [gameFormatList, setGameFormatList] = useState<GameFormatGetDTO[]>([]);
   const [filter, setFilter] = useState("");
 
-  useEffect(() => (breakInMinutes ? setOldBreakInMinutes(breakInMinutes) : undefined), [breakInMinutes]);
+  const name = "name";
+  const location = "location";
+  const startTime = "startTime";
+  const gameFormat = "gameFormat";
+  const breakInMinutes = "breakInMinutes";
+  const competitionType = "competitionType";
+
+  const validation = useValidation(
+    [
+      {
+        name: name,
+        defaultValue: "",
+        conditions: [{ expression: (value: any) => value.trim() === "", errorMessage: "Name is required!" }],
+      },
+      {
+        name: location,
+        defaultValue: "",
+        conditions: [{ expression: (value: any) => value.trim() === "", errorMessage: "Location is required!" }],
+      },
+      {
+        name: startTime,
+        defaultValue: undefined,
+        conditions: [
+          {
+            expression: (value: any) => value === undefined,
+            errorMessage: "Choose a start time!",
+          },
+          {
+            expression: (value: any) => !value || value < dayjs(Date()),
+            errorMessage: "The chosen start time passed!",
+          },
+        ],
+      },
+      {
+        name: gameFormat,
+        defaultValue: undefined,
+        conditions: [{ expression: (value: any) => value === undefined, errorMessage: "Choose a game format!" }],
+      },
+      {
+        name: breakInMinutes,
+        defaultValue: null,
+        conditions: [],
+      },
+      {
+        name: competitionType,
+        defaultValue: undefined,
+        conditions: [
+          { expression: (value: any) => value === undefined, errorMessage: "Choose the type of the competition!" },
+        ],
+      },
+    ],
+    []
+  );
+
+  useEffect(
+    () =>
+      validation.errors[breakInMinutes]?.value
+        ? setOldBreakInMinutes(validation.errors[breakInMinutes]?.value)
+        : undefined,
+    [validation.errors[breakInMinutes]?.value]
+  );
 
   useEffect(() => getGameFormats(), [filter]);
-
-  const resetForm = () => {
-    setName("");
-    setLocation("");
-    setStartTime(dayjs(new Date()));
-    setGameFormat(undefined);
-    setBreakInMinutes(1);
-    setCompetitionType(undefined);
-  };
 
   const getGameFormats = () => {
     if (user?.role !== UserRole.Administrator) return;
@@ -61,50 +108,27 @@ export const CreateCompetitionDialog: FC<CreateCompetitionDialogProps> = ({
     requests.getGameFormatsRequest({ requestBody: paginatedRequest }, (data: any) => setGameFormatList(data.items));
   };
 
+  const resetFrom = () => {
+    validation.reset();
+    setOldBreakInMinutes(1);
+  };
+
   const createRequest = useCallback(() => {
-    if (name.trim() === "") {
-      setAlertMessage("Name is required!");
-      return;
-    }
-
-    if (location.trim() === "") {
-      setAlertMessage("Location is required!");
-      return;
-    }
-
-    if (!startTime || startTime < dayjs(Date())) {
-      setAlertMessage("The chosen start time passed!");
-      return;
-    }
-
-    if (gameFormat === undefined) {
-      setAlertMessage("Choose a game format!");
-      return;
-    }
-
-    if (competitionType === undefined) {
-      setAlertMessage("Choose the type of the competition!");
-      return;
-    }
-
-    const data = {
-      name,
-      location,
-      startTime,
-      gameFormat: gameFormat?.id,
-      breakInMinutes,
+    if (!validation.pass()) return;
+    const data: { [x: string]: any } = {
+      ...validation.getData(),
+      [gameFormat]: validation.errors[gameFormat].value.id,
     };
-
     const callback = (_: any) => {
       handleReload();
       closeDialog();
-      resetForm();
+      resetFrom();
     };
 
-    competitionType === CompetitionType.ONE_VS_ALL
+    data[competitionType] === CompetitionType.ONE_VS_ALL
       ? requests.createOneVsAllCompetitionRequest({ requestBody: data }, callback)
       : requests.createTournamentCompetitionRequest({ requestBody: data }, callback);
-  }, [name, location, startTime, gameFormat, breakInMinutes, competitionType]);
+  }, [validation]);
 
   return (
     <DialogBase
@@ -113,66 +137,100 @@ export const CreateCompetitionDialog: FC<CreateCompetitionDialogProps> = ({
       doAction={{ name: "Create", handle: createRequest }}
       handleClose={() => {
         closeDialog();
-        resetForm();
+        resetFrom();
       }}
     >
-      <TextField
-        label={"Competition name"}
-        required
-        value={name}
-        onChange={(event) => setName(event.currentTarget.value)}
-      />
-      <TextField
-        label={"Location"}
-        required
-        value={location}
-        onChange={(event) => setLocation(event.currentTarget.value)}
-      />
-      <DateTimePicker
-        disablePast
-        value={startTime}
-        onChange={(value) => setStartTime(value)}
-      />
-      <Autocomplete
-        disablePortal
-        autoHighlight
-        options={gameFormatList}
-        getOptionLabel={(gameFormat) => gameFormat.name}
-        filterOptions={(x) => x}
-        onChange={(_, value) => {
-          setBreakInMinutes(gameFormat?.durationInMinutes ? oldBreakInMinutes : null);
-          setGameFormat(value ? value : undefined);
-        }}
-        renderInput={(params) => (
-          <TextField
-            {...params}
-            label="Game format"
-            required
-            onChange={(event) => setFilter(event.currentTarget.value)}
-          />
-        )}
-      />
-      <TextField
-        type="number"
-        label={"Break time (min)"}
-        required
-        disabled={!Boolean(gameFormat?.durationInMinutes)}
-        defaultValue={1}
-        value={breakInMinutes}
-        onChange={(event) => {
-          const number = Number(event.currentTarget.value);
-          setBreakInMinutes(number < 1 ? 1 : number);
-        }}
-      />
-      <TextField
-        select
-        label={"Competition type"}
-        required
-        onChange={(event) => setCompetitionType(event.target.value as CompetitionType)}
-      >
-        <MenuItem value={CompetitionType.ONE_VS_ALL}>{CompetitionType.ONE_VS_ALL}</MenuItem>
-        <MenuItem value={CompetitionType.TOURNAMENT}>{CompetitionType.TOURNAMENT}</MenuItem>
-      </TextField>
+      <Box>
+        <TextField
+          fullWidth
+          label={"Competition name"}
+          required
+          value={validation.errors[name]?.value}
+          error={Boolean(validation.errors[name]?.error)}
+          onChange={(event) => validation.setFieldValue(name, event.currentTarget.value)}
+        />
+        <FormErrorMessage>{validation.errors[name]?.error}</FormErrorMessage>
+      </Box>
+      <Box>
+        <TextField
+          fullWidth
+          label={"Location"}
+          required
+          value={validation.errors[location]?.value}
+          error={Boolean(validation.errors[location]?.error)}
+          onChange={(event) => validation.setFieldValue(location, event.currentTarget.value)}
+        />
+        <FormErrorMessage>{validation.errors[location]?.error}</FormErrorMessage>
+      </Box>
+      <Box>
+        <DateTimePicker
+          sx={{ width: "100%" }}
+          disablePast
+          value={validation.errors[startTime]?.value}
+          onChange={(value) => validation.setFieldValue(startTime, value)}
+          slotProps={{ textField: { error: Boolean(validation.errors[location]?.error) } }}
+        />
+        <FormErrorMessage>{validation.errors[startTime]?.error}</FormErrorMessage>
+      </Box>
+      <Box>
+        <Autocomplete
+          fullWidth
+          autoHighlight
+          options={gameFormatList}
+          getOptionLabel={(gameFormat) => gameFormat.name}
+          filterOptions={(x) => x}
+          onChange={(_, value) =>
+            validation.setFieldValues([
+              { field: gameFormat, value: value ? value : undefined },
+              {
+                field: breakInMinutes,
+                value: value?.durationInMinutes ? oldBreakInMinutes : null,
+              },
+            ])
+          }
+          renderInput={(params) => (
+            <TextField
+              {...params}
+              label="Game format"
+              required
+              error={Boolean(validation.errors[gameFormat]?.error)}
+              onChange={(event) => setFilter(event.currentTarget.value)}
+            />
+          )}
+        />
+        <FormErrorMessage>{validation.errors[gameFormat]?.error}</FormErrorMessage>
+      </Box>
+      <Box>
+        <TextField
+          fullWidth
+          type="number"
+          label={"Break time (min)"}
+          required
+          disabled={!Boolean(validation.errors[gameFormat]?.value?.durationInMinutes)}
+          defaultValue={1}
+          value={oldBreakInMinutes}
+          error={Boolean(validation.errors[breakInMinutes]?.error)}
+          onChange={(event) => {
+            const number = Number(event.currentTarget.value);
+            validation.setFieldValue(breakInMinutes, number < 1 ? 1 : number);
+          }}
+        />
+        <FormErrorMessage>{validation.errors[breakInMinutes]?.error}</FormErrorMessage>
+      </Box>
+      <Box>
+        <TextField
+          fullWidth
+          select
+          label={"Competition type"}
+          required
+          error={Boolean(validation.errors[competitionType]?.error)}
+          onChange={(event) => validation.setFieldValue(competitionType, event.target.value)}
+        >
+          <MenuItem value={CompetitionType.ONE_VS_ALL}>{CompetitionType.ONE_VS_ALL}</MenuItem>
+          <MenuItem value={CompetitionType.TOURNAMENT}>{CompetitionType.TOURNAMENT}</MenuItem>
+        </TextField>
+        <FormErrorMessage>{validation.errors[competitionType]?.error}</FormErrorMessage>
+      </Box>
     </DialogBase>
   );
 };

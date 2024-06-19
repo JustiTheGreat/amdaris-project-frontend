@@ -5,11 +5,12 @@ import {
   Groups as GroupsIcon,
   InfoOutlined as InfoOutlinedIcon,
   Receipt as ReceiptIcon,
+  RecentActors as RecentActorsIcon,
   Scoreboard as ScoreboardIcon,
 } from "@mui/icons-material";
 import { Box, Button, IconButton, Tooltip, Typography } from "@mui/material";
 import { FC, useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { competitorPath, matchPath } from "../../utils/PageConstants";
 import {
   CompetitionGetDTO,
@@ -29,18 +30,20 @@ import {
   TeamKeysProperties,
 } from "../../utils/data";
 import { AppContext } from "../App/App";
-import { RegisterPlayerDialog } from "../Dialogs/RegisterPlayer";
-import { RegisterTeamDialog } from "../Dialogs/RegisterTeam";
 import { NewPageContentContainer, TabInfo } from "../Containers/NewPageContentContainer";
+import { RegisterPlayerToCompetitionDialog } from "../Dialogs/RegisterPlayerToCompetitionDialog";
+import { RegisterTeamToCompetitionDialog } from "../Dialogs/RegisterTeamToCompetitionDialog";
 import { TableView } from "../TableView/TableView";
 import { Timer } from "../Timer/Timer";
 
 export const CompetitionPage: FC = () => {
+  const navigate = useNavigate();
   const { requests, user } = useContext(AppContext);
   const [competition, setCompetition] = useState<CompetitionGetDTO>();
   const [ranking, setRanking] = useState<RankingItemDTO[]>([]);
   const [winners, setWinners] = useState<CompetitorGetDTO[]>([]);
   const [dialogIsOpen, setDialogIsOpen] = useState<boolean>(false);
+  const [reloadDialogData, setReloadDialogData] = useState(false);
   const { id } = useParams();
 
   const isAdmin = useMemo<boolean>(() => user?.role === UserRole.Administrator, [user]);
@@ -54,6 +57,10 @@ export const CompetitionPage: FC = () => {
   useEffect(() => {
     getModel();
   }, []);
+
+  useEffect(() => {
+    setReloadDialogData(!reloadDialogData);
+  }, [competition]);
 
   useEffect(() => {
     if (competition && competition.status === CompetitionStatus.FINISHED)
@@ -120,9 +127,15 @@ export const CompetitionPage: FC = () => {
     [isAdmin, competition?.status, isPlayerCompetition, id]
   );
 
-  const getRanking = useCallback(() => {
-    requests.getCompetitionRankingRequest({ id }, (data: any) => setRanking(data));
-  }, [id]);
+  const getRanking = useCallback(
+    (_: any, additionalCallback?: () => void) => {
+      requests.getCompetitionRankingRequest({ id }, (data: any) => {
+        setRanking(data);
+        additionalCallback && additionalCallback();
+      });
+    },
+    [id]
+  );
 
   const tabInfoList: TabInfo[] =
     !competition || !user
@@ -134,32 +147,65 @@ export const CompetitionPage: FC = () => {
             content: (
               <Box style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
                 <Typography variant="h4">{competition.name}</Typography>
+                <Typography variant="h6">-Competition-</Typography>
                 {(competition.status === CompetitionStatus.ORGANIZING ||
                   competition.status === CompetitionStatus.NOT_STARTED) && (
                   <Typography
-                    variant="h4"
+                    variant="h6"
                     sx={{ display: "flex", alignItems: "center", gap: (theme) => theme.spacing(2) }}
                   >
-                    <>Starts in</> <Timer untilDate={competition.startTime} />
+                    <>Starts in</> <Timer untilDate={competition.actualizedStartTime} />
                   </Typography>
                 )}
                 {competition.status === CompetitionStatus.FINISHED && (
-                  <Typography variant="h4">Winners:{winners.map((winner) => " " + winner.name)}</Typography>
+                  <Typography variant="h6">
+                    {winners.length <= 1 ? "Winner:" : "Winners:"}
+                    {winners.length === 0
+                      ? "-"
+                      : winners.map((winner) => (
+                          <Button
+                            variant="outlined"
+                            size="large"
+                            sx={{ marginLeft: (theme) => theme.spacing(2), fontWeight: "bold" }}
+                            onClick={() => navigate(`/${competitorPath}/${winner.id}`)}
+                          >
+                            {winner.name}
+                          </Button>
+                        ))}
+                    {isAdmin && (
+                      <Tooltip
+                        title={"Send dimplomas to winners"}
+                        placement="right"
+                        sx={{ marginLeft: (theme) => theme.spacing(2), fontWeight: "bold" }}
+                      >
+                        <IconButton onClick={(_) => requests.SendDiplomasToCompetitionWinnersRequest({ id })}>
+                          <RecentActorsIcon />
+                        </IconButton>
+                      </Tooltip>
+                    )}
+                  </Typography>
                 )}
-
-                <Typography>Location: {competition.location}</Typography>
-                <Typography>Starting time: {formatDate(competition.startTime)}</Typography>
-                <Typography>Status: {competition.status}</Typography>
-                {competition.breakInMinutes && (
-                  <Typography>Break time in minutes: {competition.breakInMinutes}</Typography>
-                )}
-                <Typography>Game type: {competition.gameType.name}</Typography>
-                <Typography>Competitor type: {competition.competitorType}</Typography>
-                {competition.teamSize && <Typography>Team size: {competition.teamSize}</Typography>}
-                {competition.winAt && <Typography>Win at score: {competition.winAt}</Typography>}
-                {competition.durationInMinutes && (
-                  <Typography>Match duration in minutes: {competition.durationInMinutes}</Typography>
-                )}
+                <Box sx={{ height: (theme) => theme.spacing(5) }}></Box>
+                <Box sx={{ display: "flex", gap: (theme) => theme.spacing(2) }}>
+                  <Box>
+                    <Typography>Location: {competition.location}</Typography>
+                    <Typography>Initial starting time: {formatDate(competition.initialStartTime)}</Typography>
+                    <Typography>Actualized starting time: {formatDate(competition.actualizedStartTime)}</Typography>
+                    <Typography>Status: {competition.status}</Typography>
+                    <Typography>Game type: {competition.gameType.name}</Typography>
+                  </Box>
+                  <Box>
+                    <Typography>Competitor type: {competition.competitorType}</Typography>
+                    {competition.teamSize && <Typography>Team size: {competition.teamSize}</Typography>}
+                    {competition.winAt && <Typography>Win at score: {competition.winAt}</Typography>}
+                    {competition.durationInMinutes && (
+                      <Typography>Match duration in minutes: {competition.durationInMinutes}</Typography>
+                    )}
+                    {competition.breakInMinutes && (
+                      <Typography>Break time in minutes: {competition.breakInMinutes}</Typography>
+                    )}
+                  </Box>
+                </Box>
               </Box>
             ),
           },
@@ -284,18 +330,20 @@ export const CompetitionPage: FC = () => {
         isAdmin &&
         competition.status === CompetitionStatus.ORGANIZING &&
         (isPlayerCompetition ? (
-          <RegisterPlayerDialog
+          <RegisterPlayerToCompetitionDialog
             dialogIsOpen={dialogIsOpen}
             closeDialog={() => setDialogIsOpen(false)}
             handleReload={getModel}
             id={id}
+            reloadDialogData={reloadDialogData}
           />
         ) : (
-          <RegisterTeamDialog
+          <RegisterTeamToCompetitionDialog
             dialogIsOpen={dialogIsOpen}
             closeDialog={() => setDialogIsOpen(false)}
             handleReload={getModel}
             id={id}
+            reloadDialogData={reloadDialogData}
           />
         ))}
       <NewPageContentContainer tabInfoList={tabInfoList} />

@@ -18,23 +18,25 @@ interface NewPageContentContainerProps {
 }
 
 export const NewPageContentContainer: FC<NewPageContentContainerProps> = ({
-  width = "100%",
+  width,
   tabInfoList = [],
   children,
 }: NewPageContentContainerProps) => {
   const theme = useTheme();
   const slidingContentContainerRef = useRef<Element>();
   const dimensions = useRefDimensions(slidingContentContainerRef);
+
   const isActive = (ti: TabInfo) => ti.content !== undefined && ti.content !== false;
-  const activeTabInfoList = useMemo<TabInfo[]>(() => tabInfoList.filter(isActive), [tabInfoList]);
-  const [tabInfo, setTabInfo] = useState<TabInfo | undefined>(activeTabInfoList[0]);
+  const activeTabInfoList = useMemo(() => tabInfoList.filter(isActive), [tabInfoList]);
+  const [activeTabIndex, setActiveTabIndex] = useState<number>(0);
 
   return (
     <Box
       sx={{
-        width: { width },
-        flex: !width ? 1 : undefined,
-        borderRadius: 10,
+        width: width ?? "100%",
+        minHeight: !width ? (theme) => `calc(100vh - 4rem - ${theme.spacing(8)})` : undefined,
+        maxHeight: !width ? (theme) => `calc(100vh - 4rem - ${theme.spacing(8)})` : undefined,
+        borderRadius: theme.spacing(4),
         boxShadow: 20,
         display: "flex",
       }}
@@ -43,21 +45,23 @@ export const NewPageContentContainer: FC<NewPageContentContainerProps> = ({
         sx={{
           overflow: "hidden",
           backgroundColor: "primary.main",
-          borderTopLeftRadius: 10,
-          borderBottomLeftRadius: 10,
+          borderTopLeftRadius: (theme) => theme.spacing(4),
+          borderBottomLeftRadius: (theme) => theme.spacing(4),
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
           color: "primary.contrastText",
-          width: "5rem",
+          width: (theme) => theme.spacing(10),
         }}
       >
         {!children && (
           <Tabs
             orientation="vertical"
             variant="scrollable"
-            value={!tabInfo || tabInfoList.indexOf(tabInfo) === -1 ? false : tabInfoList.indexOf(tabInfo)}
-            onChange={(_, value) => setTabInfo(tabInfoList[value])}
+            value={activeTabIndex}
+            onChange={(_, value) => {
+              setActiveTabIndex(value);
+            }}
             textColor="secondary"
             indicatorColor="secondary"
             // sx={{ position: "sticky", top: "4rem" }}
@@ -78,7 +82,7 @@ export const NewPageContentContainer: FC<NewPageContentContainerProps> = ({
                       </Tooltip>
                     </HoverAnimation>
                   }
-                  sx={(theme) => ({ padding: theme.spacing(4, 0, 4, 0) })}
+                  sx={(theme) => ({ padding: theme.spacing(3, 0, 3, 0) })}
                 />
               ))}
           </Tabs>
@@ -89,8 +93,8 @@ export const NewPageContentContainer: FC<NewPageContentContainerProps> = ({
         sx={{
           flex: 1,
           backgroundColor: "primary.light",
-          borderTopRightRadius: 10,
-          borderBottomRightRadius: 10,
+          borderTopRightRadius: (theme) => theme.spacing(4),
+          borderBottomRightRadius: (theme) => theme.spacing(4),
           display: "flex",
           alignItems: "stretch",
           overflow: "hidden",
@@ -113,30 +117,27 @@ export const NewPageContentContainer: FC<NewPageContentContainerProps> = ({
               flexWrap: "nowrap",
               transition: "transform ease-out 0.5s",
               width: activeTabInfoList.length * dimensions.width,
-              transform:
-                tabInfo && tabInfoList
-                  ? `translateX(${
-                      -(activeTabInfoList.indexOf(tabInfo) === -1 ? 0 : activeTabInfoList.indexOf(tabInfo)) *
-                      dimensions.width
-                    }px)`
-                  : undefined,
+              transform: () =>
+                `translateX(${-activeTabInfoList.indexOf(tabInfoList[activeTabIndex]) * dimensions.width}px)`,
             }}
           >
-            {activeTabInfoList.map((ti) => (
-              <VisibilityAnimation
-                style={{
-                  flex: 1,
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "stretch",
-                  justifyContent: "center",
-                  padding: useTheme().spacing(2),
-                  width: `calc(${dimensions.width}px )`,
-                }}
-              >
-                {ti.content}
-              </VisibilityAnimation>
-            ))}
+            {activeTabInfoList.map((ti) => {
+              return (
+                <VisibilityAnimation
+                  style={{
+                    flex: 1,
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "stretch",
+                    justifyContent: "center",
+                    padding: useTheme().spacing(2),
+                    width: `calc(${dimensions.width}px )`,
+                  }}
+                >
+                  {ti.content}
+                </VisibilityAnimation>
+              );
+            })}
           </Box>
         )}
       </Box>

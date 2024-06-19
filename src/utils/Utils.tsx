@@ -1,5 +1,7 @@
 import { jwtDecode } from "jwt-decode";
 
+export const AppName = "ContestCraft";
+
 export const GetCSSConstant = (constantName: string) =>
   getComputedStyle(document.documentElement).getPropertyValue(constantName).trim();
 
@@ -35,7 +37,7 @@ export const getUserObjectFromToken = (token: string | null) => {
   return { role: role, playerId: playerId };
 };
 
-export const addZeroBefore = (nr: number) => `${nr < 10 ? `0${nr}` : nr}`;
+export const addZeroBefore = (nr: number) => (nr >= 0 ? `${nr < 10 ? `0${nr}` : nr}` : `${nr > -10 ? `-0${-nr}` : nr}`);
 
 export const formatDate = (date: Date | null | undefined): string => {
   if (!date) return "-";

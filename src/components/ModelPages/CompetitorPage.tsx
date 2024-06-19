@@ -3,9 +3,9 @@ import {
   EmojiEvents as EmojiEventsIcon,
   Groups as GroupsIcon,
   InfoOutlined as InfoOutlinedIcon,
+  Percent as PercentIcon,
   Receipt as ReceiptIcon,
   Scoreboard as ScoreboardIcon,
-  Percent as PercentIcon,
 } from "@mui/icons-material";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import DoDisturbIcon from "@mui/icons-material/DoDisturb";
@@ -33,8 +33,8 @@ import {
   WinRatingKeysProperties,
 } from "../../utils/data";
 import { AppContext } from "../App/App";
-import { RegisterTeamMemberDialog } from "../Dialogs/RegisterTeamMember";
 import { NewPageContentContainer, TabInfo } from "../Containers/NewPageContentContainer";
+import { RegisterTeamMemberDialog } from "../Dialogs/RegisterTeamMember";
 import { TableView } from "../TableView/TableView";
 
 export const CompetitorPage: FC = () => {
@@ -43,6 +43,7 @@ export const CompetitorPage: FC = () => {
   const [winRatings, setWinRatings] = useState<any>();
   const { id } = useParams();
   const [dialogIsOpen, setDialogIsOpen] = useState<boolean>(false);
+  const [reloadDialogData, setReloadDialogData] = useState(false);
 
   const isAdmin = useMemo<boolean>(() => user?.role === UserRole.Administrator, [user]);
   const isUser = useMemo<boolean>(() => user?.role === UserRole.User, [user]);
@@ -63,6 +64,8 @@ export const CompetitorPage: FC = () => {
     getModel();
     getCompetitorWinRatings();
   };
+
+  useEffect(() => setReloadDialogData(!reloadDialogData), [competitor]);
 
   const getModel = useCallback(() => requests.getCompetitorRequest({ id }, (data: any) => setCompetitor(data)), [id]);
 
@@ -158,10 +161,11 @@ export const CompetitorPage: FC = () => {
       content: (
         <Box style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
           <Typography variant="h4">{competitor.name}</Typography>
+          <Typography variant="h6">{`-${isPlayer ? "Player" : "Team"}-`}</Typography>
         </Box>
       ),
     });
-    if (isTeam)
+    if (isUser && isTeam)
       tabInfoList.push({
         tooltip: "Actions",
         icon: <ReceiptIcon fontSize="large" />,
@@ -298,6 +302,7 @@ export const CompetitorPage: FC = () => {
           closeDialog={() => setDialogIsOpen(false)}
           handleReload={getData}
           id={id}
+          reloadDialogData={reloadDialogData}
         />
       )}
       <NewPageContentContainer tabInfoList={getTabInfoList()} />
