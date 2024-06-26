@@ -1,21 +1,24 @@
-import { FC, ReactNode } from "react";
-import { motion } from "framer-motion";
 import { useTheme } from "@mui/material";
+import { Variants, motion } from "framer-motion";
+import { FC, ReactNode } from "react";
 
-export const HoverAnimation: FC<{
+interface HoverAnimationProps {
   key?: string;
   children: ReactNode;
-}> = ({ key, children }: { key?: string; children: ReactNode }) => {
+}
+
+export const HoverAnimation: FC<HoverAnimationProps> = ({ key, children }: HoverAnimationProps) => {
   const theme = useTheme();
   return (
     <motion.div
       key={key}
       className="box"
-      whileHover={{
-        scale: 1.2,
-        color: theme.palette.secondary.main,
+      variants={{
+        hover: {
+          scale: 1.2,
+          color: theme.palette.secondary.main,
+        },
       }}
-      transition={{ type: "spring", stiffness: 400, damping: 10 }}
     >
       {children}
     </motion.div>

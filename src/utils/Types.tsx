@@ -50,6 +50,7 @@ export interface CompetitorDisplayDTO extends IdDTO {
   numberOfTeams?: number;
   numberOfPlayers?: number;
   numberOfActivePlayers?: number;
+  profilePicture: string | null;
 }
 
 export interface MatchDisplayDTO extends IdDTO {
@@ -66,6 +67,7 @@ export interface PointDisplayDTO extends IdDTO {
   matchId: string;
   playerId: string;
   player: string;
+  profilePicture: string | null;
 }
 
 export interface TeamPlayerDisplayDTO extends IdDTO {
@@ -74,12 +76,17 @@ export interface TeamPlayerDisplayDTO extends IdDTO {
   playerId: string;
   player: string;
   isActive: boolean;
+  numberOfCompetitions: string;
+  numberOfMatches: string;
+  numberOfTeams: string;
+  profilePicture: string | null;
 }
 
 export interface RankingItemDTO extends IdDTO {
   competitor: string;
   wins: number;
   points: number;
+  profilePicture: string | null;
 }
 
 export interface GetDTO extends IdDTO {}
@@ -98,6 +105,7 @@ export interface CompetitionGetDTO extends GetDTO {
   durationInMinutes: number | null;
   competitors: CompetitorDisplayDTO[];
   matches: MatchDisplayDTO[];
+  competitionType: CompetitionType;
 }
 
 export interface OneVSAllCompetitionGetDTO extends CompetitionGetDTO {}
@@ -114,12 +122,13 @@ export interface CompetitorGetDTO extends GetDTO {
   teamPlayers: TeamPlayerDisplayDTO[];
 }
 
-export interface PlayerGetDTO extends CompetitionGetDTO {
+export interface PlayerGetDTO extends CompetitorGetDTO {
   points: string[];
   teams: CompetitorDisplayDTO[];
+  profilePicture: string | null;
 }
 
-export interface TeamGetDTO extends CompetitionGetDTO {
+export interface TeamGetDTO extends CompetitorGetDTO {
   players: CompetitorDisplayDTO[];
 }
 

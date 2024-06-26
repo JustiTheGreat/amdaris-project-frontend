@@ -15,17 +15,20 @@ export const Timer: FC<TimerProps> = ({ untilDate }: TimerProps) => {
   });
 
   useEffect(() => {
-    const timer = setInterval(() => {
-      if (untilDate !== undefined) {
-        const currentTime = Math.floor(new Date().getTime() / 1000);
-        const untilTime = Math.floor(new Date(untilDate).getTime() / 1000);
-        const remainingTime = untilTime - currentTime;
-        const hours = Math.floor(remainingTime / 3600);
-        const minutes = Math.floor((remainingTime % 3600) / 60);
-        const seconds = Math.floor(remainingTime % 60);
-        setTime({ hours, minutes, seconds });
-      }
-    }, 1000);
+    const setTimeState = () => {
+      if (!untilDate) return;
+      const currentTime = Math.floor(new Date().getTime() / 1000);
+      const untilTime = Math.floor(new Date(untilDate).getTime() / 1000);
+      const remainingTime = untilTime - currentTime;
+      const hours = Math.floor(remainingTime / 3600);
+      const minutes = Math.floor((remainingTime % 3600) / 60);
+      const seconds = Math.floor(remainingTime % 60);
+      setTime({ hours: hours < 0 ? 0 : hours, minutes: minutes < 0 ? 0 : minutes, seconds: seconds < 0 ? 0 : seconds });
+    };
+
+    setTimeState();
+
+    const timer = setInterval(setTimeState, 1000);
     return () => clearInterval(timer);
   }, [untilDate]);
 

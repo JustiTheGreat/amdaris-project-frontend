@@ -18,6 +18,7 @@ import { IdDTO, SortDirection } from "../../utils/Types";
 import { formatDate, formatKeyToSpacedLowercase } from "../../utils/Utils";
 import { KeysProperties, navigateOnRowAndKey } from "../../utils/data";
 import { AppContext } from "../App/App";
+import { ProfilePictureContainer } from "../PictureContainer/ProfilePictureContainer";
 import { TableViewHead } from "./TableViewHead/TableViewHead";
 
 interface TableViewProps<T extends IdDTO> {
@@ -96,7 +97,13 @@ export const TableView = <T extends IdDTO>({
       staticItems.map((row: any) => {
         let rowCells = tableProperties.keys.map((key) => (
           <TableCell align="center">
-            {key.isDate ? formatDate(navigateOnRowAndKey(row, key)) : navigateOnRowAndKey(row, key)}
+            {key.isDate ? (
+              formatDate(row[key.name])
+            ) : key.isImage ? (
+              <ProfilePictureContainer src={row[key.name]} />
+            ) : (
+              navigateOnRowAndKey(row, key).toString()
+            )}
           </TableCell>
         ));
 
@@ -148,7 +155,10 @@ export const TableView = <T extends IdDTO>({
                   )}`}</Typography>
                 </Box>
               }
-              onChange={(event) => setFilterValue(event.currentTarget.value)}
+              onChange={(event) => {
+                setFilterValue(event.currentTarget.value);
+                setPageNumber(0);
+              }}
             />
           )}
         </Toolbar>

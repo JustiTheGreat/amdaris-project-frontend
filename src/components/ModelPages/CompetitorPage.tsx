@@ -22,19 +22,20 @@ import {
   MatchStatus,
   PlayerGetDTO,
   TeamGetDTO,
+  TeamPlayerDisplayDTO,
 } from "../../utils/Types";
 import { UserRole } from "../../utils/UserRoles";
 import {
   CompetitionKeysProperties,
   MatchKeysProperties,
-  SpecialTeamPlayer,
-  SpecialTeamPlayerKeysProperties,
   TeamKeysProperties,
+  TeamPlayerKeysProperties,
   WinRatingKeysProperties,
 } from "../../utils/data";
 import { AppContext } from "../App/App";
 import { NewPageContentContainer, TabInfo } from "../Containers/NewPageContentContainer";
 import { RegisterTeamMemberDialog } from "../Dialogs/RegisterTeamMember";
+import { ProfilePictureContainer } from "../PictureContainer/ProfilePictureContainer";
 import { TableView } from "../TableView/TableView";
 
 export const CompetitorPage: FC = () => {
@@ -58,7 +59,7 @@ export const CompetitorPage: FC = () => {
 
   useEffect(() => {
     getData();
-  }, [location.pathname]);
+  }, [location.pathname, competitor]);
 
   const getData = () => {
     getModel();
@@ -114,13 +115,13 @@ export const CompetitorPage: FC = () => {
   );
 
   const getPlayerActions = useCallback(
-    (row: SpecialTeamPlayer): JSX.Element[] =>
+    (row: TeamPlayerDisplayDTO): JSX.Element[] =>
       !isAdmin
         ? []
         : [
             <Tooltip
               title={
-                competitor?.teamPlayers.find((teamPlayer) => teamPlayer.playerId === row.id)?.isActive
+                competitor?.teamPlayers.find((teamPlayer) => teamPlayer.playerId === row.playerId)?.isActive
                   ? "Make inactive"
                   : "Make active"
               }
@@ -128,10 +129,10 @@ export const CompetitorPage: FC = () => {
               <IconButton
                 onClick={(event) => {
                   event.stopPropagation();
-                  changeTeamPlayerStatusAdmin(row.id);
+                  changeTeamPlayerStatusAdmin(row.playerId);
                 }}
               >
-                {competitor?.teamPlayers.find((teamPlayer) => teamPlayer.playerId === row.id)?.isActive ? (
+                {competitor?.teamPlayers.find((teamPlayer) => teamPlayer.playerId === row.playerId)?.isActive ? (
                   <DoDisturbIcon color="warning" />
                 ) : (
                   <CheckCircleOutlineIcon color="success" />
@@ -142,7 +143,7 @@ export const CompetitorPage: FC = () => {
               <IconButton
                 onClick={(event) => {
                   event.stopPropagation();
-                  removePlayerFromTeamAdmin(row.id);
+                  removePlayerFromTeamAdmin(row.playerId);
                 }}
               >
                 <GridDeleteIcon color="error" />
@@ -160,7 +161,13 @@ export const CompetitorPage: FC = () => {
       icon: <InfoOutlinedIcon fontSize="large" />,
       content: (
         <Box style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
-          <Typography variant="h4">{competitor.name}</Typography>
+          <Typography
+            variant="h4"
+            sx={{ display: "flex", gap: (theme) => theme.spacing(2) }}
+          >
+            {isPlayer && <ProfilePictureContainer src={(competitor as PlayerGetDTO).profilePicture} />}
+            {competitor.name}
+          </Typography>
           <Typography variant="h6">{`-${isPlayer ? "Player" : "Team"}-`}</Typography>
         </Box>
       ),
@@ -258,18 +265,11 @@ export const CompetitorPage: FC = () => {
           navigateOnClick={{ navigationBaseRoute: competitorPath }}
         />
       ) : (
-        <TableView<SpecialTeamPlayer>
+        <TableView<TeamPlayerDisplayDTO>
           tableName={"Players"}
-          tableProperties={SpecialTeamPlayerKeysProperties}
+          tableProperties={TeamPlayerKeysProperties}
           dense
-          staticItems={(competitor as any as TeamGetDTO).players.map((player) => {
-            return {
-              ...player,
-              isActive: competitor.teamPlayers
-                .find((teamPlayer) => teamPlayer.playerId === player.id)
-                ?.isActive.toString(),
-            } as SpecialTeamPlayer;
-          })}
+          staticItems={(competitor as any as TeamGetDTO).teamPlayers}
           navigateOnClick={{ navigationBaseRoute: competitorPath }}
           toolbarActions={playerToolbarActions}
           getRowActions={getPlayerActions}

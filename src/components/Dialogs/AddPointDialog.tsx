@@ -1,4 +1,4 @@
-import { TextField } from "@mui/material";
+import { Button, TextField } from "@mui/material";
 import { FC, useCallback, useContext, useState } from "react";
 import { AppContext } from "../App/App";
 import { BaseDialogProps, DialogBase } from "./DialogBase";
@@ -32,11 +32,11 @@ export const AddPointDialog: FC<AddPointDialogProps> = ({
     <DialogBase
       title={"Add point"}
       open={dialogIsOpen}
-      doAction={{ name: "Add", handle: addValueToPoint }}
       handleClose={() => {
         closeDialog();
         resetForm();
       }}
+      buttons={[<Button onClick={addValueToPoint}>Add</Button>]}
     >
       <TextField
         type="number"

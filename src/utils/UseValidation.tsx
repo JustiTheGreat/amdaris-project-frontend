@@ -40,7 +40,7 @@ export function useValidation(inputs: Input[], dependencies: any[]) {
     setErrors(newErrors);
   }, [...dependencies]);
 
-  const setFieldValue = (field: string, value: any) =>
+  const setFieldValue = (field: string, value: any): void =>
     setErrors({
       ...errors,
       [field]: {
@@ -50,7 +50,7 @@ export function useValidation(inputs: Input[], dependencies: any[]) {
       },
     });
 
-  const setFieldValues = (list: { field: string; value: any }[]) => {
+  const setFieldValues = (list: { field: string; value: any }[]): void => {
     const newErrors = list
       .map((item) => ({
         [item.field]: {
@@ -63,11 +63,11 @@ export function useValidation(inputs: Input[], dependencies: any[]) {
     setErrors({ ...errors, ...newErrors });
   };
 
-  const pass = () => {
+  const pass = (): boolean => {
     const mapped = Object.keys(errors).map((formField) => ({
       [formField]: { ...errors[formField], error: errors[formField].condition(errors[formField].value) },
     }));
-    if (mapped.length === 0) return;
+    if (mapped.length === 0) return true;
     const newErrors = mapped.reduce((prev, current) => ({ ...prev, ...current }));
     setErrors(newErrors);
     return (
@@ -77,7 +77,7 @@ export function useValidation(inputs: Input[], dependencies: any[]) {
     );
   };
 
-  const reset = () => {
+  const reset = (): void => {
     const mapped = Object.keys(errors).map((formField) => ({
       [formField]: { ...errors[formField], value: errors[formField].defaultValue, error: undefined },
     }));
@@ -86,7 +86,9 @@ export function useValidation(inputs: Input[], dependencies: any[]) {
     setErrors(newErrors);
   };
 
-  const getData = () => {
+  const getData = (): {
+    [x: string]: any;
+  } => {
     const mapped = Object.keys(errors).map((formField) => ({ [formField]: errors[formField].value }));
     if (mapped.length === 0) return {};
     const values = mapped.reduce((prev, current) => ({ ...prev, ...current }));

@@ -15,10 +15,12 @@ import { competitorPath, matchPath } from "../../utils/PageConstants";
 import {
   CompetitionGetDTO,
   CompetitionStatus,
+  CompetitionType,
   CompetitorDisplayDTO,
   CompetitorGetDTO,
   CompetitorType,
   MatchDisplayDTO,
+  PlayerGetDTO,
   RankingItemDTO,
 } from "../../utils/Types";
 import { UserRole } from "../../utils/UserRoles";
@@ -35,6 +37,7 @@ import { RegisterPlayerToCompetitionDialog } from "../Dialogs/RegisterPlayerToCo
 import { RegisterTeamToCompetitionDialog } from "../Dialogs/RegisterTeamToCompetitionDialog";
 import { TableView } from "../TableView/TableView";
 import { Timer } from "../Timer/Timer";
+import { ProfilePictureContainer } from "../PictureContainer/ProfilePictureContainer";
 
 export const CompetitionPage: FC = () => {
   const navigate = useNavigate();
@@ -44,6 +47,7 @@ export const CompetitionPage: FC = () => {
   const [winners, setWinners] = useState<CompetitorGetDTO[]>([]);
   const [dialogIsOpen, setDialogIsOpen] = useState<boolean>(false);
   const [reloadDialogData, setReloadDialogData] = useState(false);
+  const [firstTabSwitch, setFirstTabSwitch] = useState<boolean>(false);
   const { id } = useParams();
 
   const isAdmin = useMemo<boolean>(() => user?.role === UserRole.Administrator, [user]);
@@ -56,6 +60,7 @@ export const CompetitionPage: FC = () => {
 
   useEffect(() => {
     getModel();
+    getRanking(id);
   }, []);
 
   useEffect(() => {
@@ -67,16 +72,26 @@ export const CompetitionPage: FC = () => {
       requests.getCompetitionWinnersRequest({ id }, (data: any) => setWinners(data));
   }, [competition]);
 
-  const getModel = () => requests.getCompetitionRequest({ id }, (data: any) => setCompetition(data));
+  const getModel = () => {
+    requests.getCompetitionRequest({ id }, (data: any) => setCompetition(data));
+  };
 
   const stopRegistrationsRequest = () =>
     requests.stopCompetitionRegistrationsRequest({ id }, (data: any) => setCompetition(data));
 
   const startRequest = () => requests.startCompetitionRequest({ id }, (data: any) => setCompetition(data));
 
-  const endRequest = () => requests.endCompetitionRequest({ id }, (data: any) => setCompetition(data));
+  // const endRequest = () =>
+  //   requests.endCompetitionRequest({ id }, (data: any) => {
+  //     setCompetition(data);
+  //     setFirstTabSwitch(!firstTabSwitch);
+  //   });
 
-  const cancelRequest = () => requests.cancelCompetitionRequest({ id }, (data: any) => setCompetition(data));
+  const cancelRequest = () =>
+    requests.cancelCompetitionRequest({ id }, (data: any) => {
+      setCompetition(data);
+      setFirstTabSwitch(!firstTabSwitch);
+    });
 
   const registerCompetitorToCompetitionUser = () =>
     requests.registerCompetitorToCompetitionUserRequest({ id }, (data: any) => setCompetition(data));
@@ -147,7 +162,11 @@ export const CompetitionPage: FC = () => {
             content: (
               <Box style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
                 <Typography variant="h4">{competition.name}</Typography>
-                <Typography variant="h6">-Competition-</Typography>
+                <Typography variant="h6">{`-${
+                  competition.competitionType === CompetitionType.ONE_VS_ALL
+                    ? "One VS All Competition"
+                    : "Tournament Competition"
+                }-`}</Typography>
                 {(competition.status === CompetitionStatus.ORGANIZING ||
                   competition.status === CompetitionStatus.NOT_STARTED) && (
                   <Typography
@@ -158,7 +177,14 @@ export const CompetitionPage: FC = () => {
                   </Typography>
                 )}
                 {competition.status === CompetitionStatus.FINISHED && (
-                  <Typography variant="h6">
+                  <Typography
+                    variant="h6"
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: (theme) => theme.spacing(2),
+                    }}
+                  >
                     {winners.length <= 1 ? "Winner:" : "Winners:"}
                     {winners.length === 0
                       ? "-"
@@ -166,9 +192,16 @@ export const CompetitionPage: FC = () => {
                           <Button
                             variant="outlined"
                             size="large"
-                            sx={{ marginLeft: (theme) => theme.spacing(2), fontWeight: "bold" }}
+                            sx={{
+                              fontWeight: "bold",
+                              display: "flex",
+                              gap: (theme) => theme.spacing(2),
+                            }}
                             onClick={() => navigate(`/${competitorPath}/${winner.id}`)}
                           >
+                            {isPlayerCompetition && (
+                              <ProfilePictureContainer src={(winner as PlayerGetDTO).profilePicture} />
+                            )}
                             {winner.name}
                           </Button>
                         ))}
@@ -176,9 +209,11 @@ export const CompetitionPage: FC = () => {
                       <Tooltip
                         title={"Send dimplomas to winners"}
                         placement="right"
-                        sx={{ marginLeft: (theme) => theme.spacing(2), fontWeight: "bold" }}
                       >
-                        <IconButton onClick={(_) => requests.SendDiplomasToCompetitionWinnersRequest({ id })}>
+                        <IconButton
+                          sx={{ "&:hover": { color: "focus.main" } }}
+                          onClick={(_) => requests.SendDiplomasToCompetitionWinnersRequest({ id })}
+                        >
                           <RecentActorsIcon />
                         </IconButton>
                       </Tooltip>
@@ -186,12 +221,14 @@ export const CompetitionPage: FC = () => {
                   </Typography>
                 )}
                 <Box sx={{ height: (theme) => theme.spacing(5) }}></Box>
+                <Typography sx={{ fontWeight: "bold", color: (theme) => theme.palette.focus.main }}>
+                  Status: {competition.status}
+                </Typography>
                 <Box sx={{ display: "flex", gap: (theme) => theme.spacing(2) }}>
                   <Box>
                     <Typography>Location: {competition.location}</Typography>
                     <Typography>Initial starting time: {formatDate(competition.initialStartTime)}</Typography>
                     <Typography>Actualized starting time: {formatDate(competition.actualizedStartTime)}</Typography>
-                    <Typography>Status: {competition.status}</Typography>
                     <Typography>Game type: {competition.gameType.name}</Typography>
                   </Box>
                   <Box>
@@ -252,9 +289,6 @@ export const CompetitionPage: FC = () => {
                   )}
                   {(isAdmin && competition.status) === CompetitionStatus.NOT_STARTED && (
                     <Button onClick={startRequest}>Start competition</Button>
-                  )}
-                  {(isAdmin && competition.status) === CompetitionStatus.STARTED && (
-                    <Button onClick={endRequest}>End competition</Button>
                   )}
                   {isAdmin &&
                     (competition.status === CompetitionStatus.ORGANIZING ||
@@ -346,7 +380,10 @@ export const CompetitionPage: FC = () => {
             reloadDialogData={reloadDialogData}
           />
         ))}
-      <NewPageContentContainer tabInfoList={tabInfoList} />
+      <NewPageContentContainer
+        tabInfoList={tabInfoList}
+        firstTabSwitch={firstTabSwitch}
+      />
     </>
   );
 };

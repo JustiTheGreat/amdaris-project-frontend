@@ -1,4 +1,4 @@
-import { Autocomplete, Box, Checkbox, FormControlLabel, MenuItem, TextField } from "@mui/material";
+import { Autocomplete, Box, Button, Checkbox, FormControlLabel, MenuItem, TextField } from "@mui/material";
 import { FC, useCallback, useContext, useEffect, useRef, useState } from "react";
 import { PaginatedRequest } from "../../utils/PageConstants";
 import { CompetitorType, GameTypeGetDTO, SortDirection } from "../../utils/Types";
@@ -20,7 +20,7 @@ export const CreateGameFormatDialog: FC<CreateGameFormatDialogProps> = ({
   const [oldWinAt, setOldWinAt] = useState<number>(1);
   const [oldDurationInMinutes, setOldDurationInMinutes] = useState<number>(1);
   const [gameTypeList, setGameTypeList] = useState<GameTypeGetDTO[]>([]);
-  const [filter, setFilter] = useState("");
+  const [filter, setFilter] = useState<string>("");
   const durationInMinutesCheckbox = useRef<any>();
 
   const name = "name";
@@ -35,19 +35,21 @@ export const CreateGameFormatDialog: FC<CreateGameFormatDialogProps> = ({
       {
         name: name,
         defaultValue: "",
-        conditions: [{ expression: (value: any) => value.trim() === "", errorMessage: "Name is required!" }],
+        conditions: [{ expression: (value: string) => value.trim() === "", errorMessage: "Name is required!" }],
       },
       {
         name: gameType,
         defaultValue: undefined,
-        conditions: [{ expression: (value: any) => value === undefined, errorMessage: "Choose a game type!" }],
+        conditions: [
+          { expression: (value: string | undefined) => value === undefined, errorMessage: "Choose a game type!" },
+        ],
       },
       {
         name: competitorType,
         defaultValue: undefined,
         conditions: [
           {
-            expression: (value: any) => value === undefined,
+            expression: (value: string | undefined) => value === undefined,
             errorMessage: "Choose the competitor type!",
           },
         ],
@@ -90,18 +92,8 @@ export const CreateGameFormatDialog: FC<CreateGameFormatDialogProps> = ({
     [validation.errors[durationInMinutes]?.value]
   );
 
-  useEffect(() => getGameTypeList(), [filter]);
-
-  const resetForm = () => {
-    validation.reset();
-    setOldTeamSize(2);
-    setOldWinAt(1);
-    setOldDurationInMinutes(1);
-  };
-
-  const getGameTypeList = () => {
-    if (user?.role !== UserRole.Administrator) return;
-
+  useEffect(() => {
+    if (user?.role !== UserRole.Administrator || !dialogIsOpen) return;
     const paginatedRequest: PaginatedRequest = {
       pageIndex: 0,
       pageSize: 5,
@@ -119,10 +111,17 @@ export const CreateGameFormatDialog: FC<CreateGameFormatDialogProps> = ({
     };
 
     requests.getGameTypesRequest({ requestBody: paginatedRequest }, (data: any) => setGameTypeList(data.items));
+  }, [dialogIsOpen, filter]);
+
+  const resetForm = () => {
+    validation.reset();
+    setOldTeamSize(2);
+    setOldWinAt(1);
+    setOldDurationInMinutes(1);
+    setFilter("");
   };
 
   const createRequest = useCallback(() => {
-    console.log(validation.errors[winAt].value, validation.errors[durationInMinutes].value);
     const atLeastOneMatchWinCriteriaIsSelected =
       validation.errors[winAt]?.value !== null || validation.errors[durationInMinutes]?.value !== null;
     if (!atLeastOneMatchWinCriteriaIsSelected) setAtLeastOneMatchWinCriteriaIsSelected(false);
@@ -143,11 +142,11 @@ export const CreateGameFormatDialog: FC<CreateGameFormatDialogProps> = ({
     <DialogBase
       title={"Create game format"}
       open={dialogIsOpen}
-      doAction={{ name: "Create", handle: createRequest }}
       handleClose={() => {
         closeDialog();
         resetForm();
       }}
+      buttons={[<Button onClick={createRequest}>Create</Button>]}
     >
       <Box>
         <TextField
@@ -165,7 +164,7 @@ export const CreateGameFormatDialog: FC<CreateGameFormatDialogProps> = ({
           fullWidth
           autoHighlight
           options={gameTypeList}
-          getOptionLabel={(gameType) => gameType.name ?? ""}
+          getOptionLabel={(gameType) => gameType.name}
           filterOptions={(x) => x}
           onChange={(_, value) => validation.setFieldValue(gameType, value ? value.id : undefined)}
           renderInput={(params) => (

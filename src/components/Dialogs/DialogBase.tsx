@@ -11,14 +11,11 @@ interface DialogBaseProps {
   title: string;
   open: boolean;
   handleClose: () => void;
-  doAction: {
-    name: string;
-    handle: () => void;
-  };
+  buttons: JSX.Element[];
   children: ReactNode;
 }
 
-export const DialogBase: FC<DialogBaseProps> = ({ title, doAction, open, handleClose, children }: DialogBaseProps) => {
+export const DialogBase: FC<DialogBaseProps> = ({ title, open, handleClose, buttons, children }: DialogBaseProps) => {
   return (
     <Dialog
       open={open}
@@ -31,7 +28,7 @@ export const DialogBase: FC<DialogBaseProps> = ({ title, doAction, open, handleC
             display: "flex",
             flexDirection: "column",
             gap: (theme) => theme.spacing(2),
-            width: "30rem",
+            width: "25rem",
             padding: (theme) => theme.spacing(2, 4, 4, 4),
           }}
         >
@@ -45,7 +42,7 @@ export const DialogBase: FC<DialogBaseProps> = ({ title, doAction, open, handleC
         >
           Cancel
         </Button>
-        <Button onClick={doAction.handle}>{doAction.name}</Button>
+        {buttons}
       </DialogActions>
     </Dialog>
   );

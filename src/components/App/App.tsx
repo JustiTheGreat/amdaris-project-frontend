@@ -8,6 +8,7 @@ import {
   gameFormatPath,
   matchPath,
   playerPath,
+  profileSettingsPath,
   teamPath,
   useRequests,
 } from "../../utils/PageConstants";
@@ -27,18 +28,29 @@ import { GameFormatsOverview } from "../Overviews/GameFormatsOverview";
 import { PlayersOverview } from "../Overviews/PlayersOverview";
 import { TeamsOverview } from "../Overviews/TeamsOverview";
 import { UnauthorizedContainer } from "../UnauthorizedContainer/UnauthorizedContainer";
+import { ProfileSettings } from "../ProfileSettings/ProfileSettings";
 
 interface User {
   role: string;
   playerId: string | undefined;
+  profilePictureUri: string | null;
+  firstName: string;
+  lastName: string;
+  username: string;
+  email: string;
 }
 
 interface AppContextType {
   user: User | undefined;
   pageSize: number;
   setPageSize: (value: 5 | 10) => void;
-  setAlertMessage: (value: string) => void;
+  setAlert: (value: Alert | undefined) => void;
   requests: any;
+}
+
+export interface Alert {
+  message: string | undefined;
+  severity: "success" | "error";
 }
 
 export const AppContext = createContext({} as AppContextType);
@@ -46,25 +58,23 @@ export const AppContext = createContext({} as AppContextType);
 export type PageSize = 5 | 10;
 
 export const App: FC = () => {
-  const [pageSize, setPageSize] = useState<5 | 10>(5);
-  const [alertMesssage, setAlertMessage] = useState<string | undefined>(undefined);
+  const [pageSize, setPageSize] = useState<PageSize>(5);
+  const [alert, setAlert] = useState<Alert | undefined>(undefined);
   const [user, setUser] = useState<User>();
+  const requests = useRequests(setAlert);
 
-  const requests = useRequests(setAlertMessage);
+  useEffect(() => {
+    const handleStorage = () => setUser(getUserObjectFromToken(localStorage.getItem("token")));
 
-  const authenticated = useMemo<boolean>(
-    () => location.pathname !== authenticationPath && localStorage.getItem("token") !== null,
-    [location.pathname]
-  );
+    handleStorage();
+
+    window.addEventListener("storage", handleStorage);
+    return () => window.removeEventListener("storage", handleStorage);
+  }, []);
 
   const unauthorizedAccess = useMemo(
-    () => !authenticated && location.pathname !== authenticationPath,
-    [location.pathname]
-  );
-
-  useEffect(
-    () => (authenticated ? setUser(getUserObjectFromToken(localStorage.getItem("token"))) : undefined),
-    [authenticated]
+    () => location.pathname !== authenticationPath && localStorage.getItem("token") === null,
+    [location.pathname, user]
   );
 
   return (
@@ -73,20 +83,10 @@ export const App: FC = () => {
         user,
         pageSize,
         setPageSize,
-        setAlertMessage,
+        setAlert,
         requests,
       }}
     >
-      {/* <Box
-        sx={{
-          backgroundColor: "secondary.main",
-          minHeight: "100vh",
-          display: "flex",
-          flexDirection: "column",
-          position: "fixed",
-        }}
-      ></Box> */}
-
       <Routes>
         <Route element={<AppContainer center />}>
           <Route
@@ -126,35 +126,36 @@ export const App: FC = () => {
                   element={<GameFormatsOverview />}
                 />
               </Route>
-
               <Route
                 path={`${competitionPath}/:id`}
                 element={<CompetitionPage />}
               />
-
               <Route
                 path={`${competitorPath}/:id`}
                 element={<CompetitorPage />}
               />
-
               <Route
                 path={`${matchPath}/:id`}
                 element={<MatchPage />}
+              />
+              <Route
+                path={profileSettingsPath}
+                element={<ProfileSettings />}
               />
             </Route>
           </Route>
         </Route>
       </Routes>
       <Snackbar
-        open={Boolean(alertMesssage)}
-        onClose={() => setAlertMessage(undefined)}
-        onClick={() => setAlertMessage(undefined)}
+        open={Boolean(alert)}
+        onClose={() => setAlert(undefined)}
+        onClick={() => setAlert(undefined)}
       >
         <Alert
           variant="filled"
-          severity="error"
+          severity={alert?.severity}
         >
-          {alertMesssage}
+          {alert?.message}
         </Alert>
       </Snackbar>
       <Box sx={{ position: "fixed", zIndex: "-1", bottom: 0 }}>

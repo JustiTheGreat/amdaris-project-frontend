@@ -1,4 +1,6 @@
 import { jwtDecode } from "jwt-decode";
+import adminProfilePicture from "../assets/admin_profile_picture.svg";
+import { UserRole } from "./UserRoles";
 
 export const AppName = "ContestCraft";
 
@@ -32,9 +34,23 @@ export const getIndexOfEnumValueString = <ENUM extends string>(
 export const getUserObjectFromToken = (token: string | null) => {
   if (!token) return undefined;
   const decodedToken: any = jwtDecode(token);
-  const role = decodedToken["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"];
-  const playerId = decodedToken["PlayerId"];
-  return { role: role, playerId: playerId };
+  const role: UserRole = decodedToken["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"];
+  const playerId: string = decodedToken["PlayerId"];
+  const profilePictureUri: string | null =
+    role === UserRole.Administrator ? adminProfilePicture : decodedToken["ProfilePictureUri"] ?? null;
+  const firstName: string = decodedToken["FirstName"];
+  const lastName: string = decodedToken["LastName"];
+  const username: string = decodedToken["Username"];
+  const email: string = decodedToken["Email"];
+  return {
+    role: role,
+    playerId: playerId,
+    profilePictureUri: profilePictureUri,
+    firstName: firstName,
+    lastName: lastName,
+    username: username,
+    email: email,
+  };
 };
 
 export const addZeroBefore = (nr: number) => (nr >= 0 ? `${nr < 10 ? `0${nr}` : nr}` : `${nr > -10 ? `-0${-nr}` : nr}`);

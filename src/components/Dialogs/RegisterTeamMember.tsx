@@ -1,11 +1,13 @@
-import { Autocomplete, Box, TextField } from "@mui/material";
+import { Autocomplete, Box, Button, TextField } from "@mui/material";
 import { FC, useCallback, useContext, useEffect, useState } from "react";
-import { CompetitionDisplayDTO } from "../../utils/Types";
+import { PaginatedRequest } from "../../utils/PageConstants";
+import { CompetitorDisplayDTO, SortDirection } from "../../utils/Types";
+import { useValidation } from "../../utils/UseValidation";
 import { UserRole } from "../../utils/UserRoles";
 import { AppContext } from "../App/App";
-import { BaseDialogProps, DialogBase } from "./DialogBase";
-import { useValidation } from "../../utils/UseValidation";
 import { FormErrorMessage } from "../FormErrorMessage/FormErrorMessage";
+import { ProfilePictureContainer } from "../PictureContainer/ProfilePictureContainer";
+import { BaseDialogProps, DialogBase } from "./DialogBase";
 
 interface RegisterTeamMemberDialogProps extends BaseDialogProps {
   id: string;
@@ -20,7 +22,8 @@ export const RegisterTeamMemberDialog: FC<RegisterTeamMemberDialogProps> = ({
   reloadDialogData,
 }: RegisterTeamMemberDialogProps) => {
   const { user, requests } = useContext(AppContext);
-  const [players, setPlayers] = useState<CompetitionDisplayDTO[]>([]);
+  const [players, setPlayers] = useState<CompetitorDisplayDTO[]>([]);
+  const [filter, setFilter] = useState<string>("");
 
   const playerId = "playerId";
 
@@ -29,23 +32,39 @@ export const RegisterTeamMemberDialog: FC<RegisterTeamMemberDialogProps> = ({
       {
         name: playerId,
         defaultValue: undefined,
-        conditions: [{ expression: (value: any) => value === undefined, errorMessage: "Select a player!" }],
+        conditions: [
+          { expression: (value: string | undefined) => value === undefined, errorMessage: "Select a player!" },
+        ],
       },
     ],
     []
   );
 
   useEffect(() => {
-    if (user?.role !== UserRole.Administrator) return;
-    getPlayersNotInTeam();
-  }, [reloadDialogData]);
+    if (user?.role !== UserRole.Administrator || !dialogIsOpen) return;
+    const paginatedRequest: PaginatedRequest = {
+      pageIndex: 0,
+      pageSize: 5,
+      columnNameForSorting: "name",
+      sortDirection: SortDirection.ASCENDING,
+      requestFilters: {
+        logicalOperator: 0,
+        filters: [
+          {
+            path: "name",
+            value: filter,
+          },
+        ],
+      },
+    };
 
-  const resetForm = () => validation.setFieldValue(playerId, undefined);
+    requests.getPlayersNotInTeamRequest({ id, requestBody: paginatedRequest }, (data: any) => setPlayers(data.items));
+  }, [dialogIsOpen, filter, reloadDialogData]);
 
-  const getPlayersNotInTeam = useCallback(
-    () => requests.getPlayersNotInTeamRequest({ id }, (data: any) => setPlayers(data)),
-    [id]
-  );
+  const resetForm = () => {
+    validation.reset();
+    setFilter("");
+  };
 
   const addPlayerToTeam = useCallback(() => {
     if (!validation.pass()) return;
@@ -61,11 +80,11 @@ export const RegisterTeamMemberDialog: FC<RegisterTeamMemberDialogProps> = ({
     <DialogBase
       title={"Add team member"}
       open={dialogIsOpen}
-      doAction={{ name: "Add", handle: addPlayerToTeam }}
       handleClose={() => {
         closeDialog();
         resetForm();
       }}
+      buttons={[<Button onClick={addPlayerToTeam}>Add</Button>]}
     >
       <Box>
         <Autocomplete
@@ -74,11 +93,23 @@ export const RegisterTeamMemberDialog: FC<RegisterTeamMemberDialogProps> = ({
           getOptionLabel={(player) => player.name}
           filterOptions={(x) => x}
           onChange={(_, value) => validation.setFieldValue(playerId, value?.id)}
+          renderOption={(props, option) => (
+            <Box
+              component="li"
+              sx={{ display: "flex", gap: (theme) => theme.spacing(2) }}
+              {...props}
+            >
+              <ProfilePictureContainer src={option.profilePicture} />
+              {option.name}
+            </Box>
+          )}
           renderInput={(params) => (
             <TextField
               {...params}
               label="Player"
+              value={filter}
               error={Boolean(validation.errors[playerId]?.error)}
+              onChange={(event) => setFilter(event.currentTarget.value)}
             />
           )}
         />

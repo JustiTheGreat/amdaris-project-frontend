@@ -1,4 +1,3 @@
-import { AccountCircle } from "@mui/icons-material";
 import { Box, IconButton, Menu, MenuItem, Tab, Tabs, Toolbar, Tooltip, Typography } from "@mui/material";
 import { FC, useContext, useEffect, useState } from "react";
 import { Outlet, useNavigate } from "react-router-dom";
@@ -8,12 +7,13 @@ import {
   competitorPath,
   gameFormatPath,
   playerPath,
+  profileSettingsPath,
   teamPath,
 } from "../../utils/PageConstants";
 import { UserRole } from "../../utils/UserRoles";
 import { AppName, formatCamelCaseToReadable } from "../../utils/Utils";
-import { HoverAnimation } from "../Animations/HoverAnimation";
 import { AppContext } from "../App/App";
+import { ProfilePictureContainer } from "../PictureContainer/ProfilePictureContainer";
 
 type NavigationTab = typeof competitionPath | typeof playerPath | typeof teamPath | typeof gameFormatPath;
 const navigationBarTabs: NavigationTab[] = [competitionPath, playerPath, teamPath, gameFormatPath];
@@ -32,6 +32,12 @@ export const NavigationBar: FC = () => {
   const handleGoToPlayerPage = () => {
     if (!user) return;
     navigate(`/${competitorPath}/${user?.playerId}`);
+    handleCloseUserMenu();
+  };
+
+  const handleGoToProfileSettings = () => {
+    if (!user) return;
+    navigate(`/${profileSettingsPath}`);
     handleCloseUserMenu();
   };
 
@@ -61,7 +67,7 @@ export const NavigationBar: FC = () => {
           borderRadius: (theme) => theme.spacing(4),
           position: "sticky",
           top: 0,
-          zIndex: 1,
+          zIndex: 2,
         }}
       >
         <Typography
@@ -81,9 +87,22 @@ export const NavigationBar: FC = () => {
         >
           {navigationBarTabs.map((nbt) => (
             <Tab
+              sx={{
+                "&:hover > p": {
+                  transform: "scale(1.2)",
+                  transitionDuration: "0.3s",
+                },
+              }}
               key={nbt}
               value={nbt}
-              label={<HoverAnimation key={nbt}>{formatCamelCaseToReadable(nbt)}</HoverAnimation>}
+              label={
+                <Typography
+                  variant="body2"
+                  sx={{ color: "primary.contrastText" }}
+                >
+                  {`${formatCamelCaseToReadable(nbt)}s`}
+                </Typography>
+              }
               onClick={(_) => {
                 if (nbt === navigationTab && nbt != location.pathname.slice(1)) {
                   setNavigationTab(nbt);
@@ -95,10 +114,20 @@ export const NavigationBar: FC = () => {
         </Tabs>
         <Box sx={{ flex: 1 }}></Box>
         <Box>
-          <Tooltip title="Open settings">
-            <IconButton onClick={handleOpenUserMenu}>
-              <AccountCircle color={"secondary"} />
-            </IconButton>
+          <Tooltip title={`${user?.username}'s menu`}>
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                cursor: "pointer",
+              }}
+              onClick={handleOpenUserMenu}
+            >
+              <IconButton>
+                <ProfilePictureContainer src={user?.profilePictureUri ?? null} />
+              </IconButton>
+              <Typography sx={{ color: "primary.contrastText" }}>{user?.username}</Typography>
+            </Box>
           </Tooltip>
           <Menu
             id="menu-appbar"
@@ -115,12 +144,20 @@ export const NavigationBar: FC = () => {
             onClose={handleCloseUserMenu}
           >
             {user && user.role === UserRole.User && (
-              <MenuItem
-                key={"Player page"}
-                onClick={handleGoToPlayerPage}
-              >
-                <Typography>My player page</Typography>
-              </MenuItem>
+              <>
+                <MenuItem
+                  key={"Player page"}
+                  onClick={handleGoToPlayerPage}
+                >
+                  <Typography>My player page</Typography>
+                </MenuItem>
+                <MenuItem
+                  key={"Profile settings"}
+                  onClick={handleGoToProfileSettings}
+                >
+                  <Typography>Profile settings</Typography>
+                </MenuItem>
+              </>
             )}
             <MenuItem
               key={"Logout"}

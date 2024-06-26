@@ -9,7 +9,7 @@ export const VisibilityAnimation: FC<{
 }> = ({ key, children, style }: { key?: string; children?: ReactNode; style?: MotionStyle }) => {
   return (
     <motion.div
-      key={key}
+      key={key ?? undefined}
       initial={{ y: 20, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       exit={{ y: 20, opacity: 0 }}

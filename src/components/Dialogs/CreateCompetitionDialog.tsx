@@ -1,4 +1,4 @@
-import { Autocomplete, Box, MenuItem, TextField } from "@mui/material";
+import { Autocomplete, Box, Button, MenuItem, TextField } from "@mui/material";
 import { DateTimePicker } from "@mui/x-date-pickers";
 import dayjs from "dayjs";
 import { FC, useCallback, useContext, useEffect, useState } from "react";
@@ -20,7 +20,7 @@ export const CreateCompetitionDialog: FC<CreateCompetitionDialogProps> = ({
   const { user, requests } = useContext(AppContext);
   const [oldBreakInMinutes, setOldBreakInMinutes] = useState<number>(1);
   const [gameFormatList, setGameFormatList] = useState<GameFormatGetDTO[]>([]);
-  const [filter, setFilter] = useState("");
+  const [filter, setFilter] = useState<string>("");
 
   const name = "name";
   const location = "location";
@@ -34,23 +34,23 @@ export const CreateCompetitionDialog: FC<CreateCompetitionDialogProps> = ({
       {
         name: name,
         defaultValue: "",
-        conditions: [{ expression: (value: any) => value.trim() === "", errorMessage: "Name is required!" }],
+        conditions: [{ expression: (value: string) => value.trim() === "", errorMessage: "Name is required!" }],
       },
       {
         name: location,
         defaultValue: "",
-        conditions: [{ expression: (value: any) => value.trim() === "", errorMessage: "Location is required!" }],
+        conditions: [{ expression: (value: string) => value.trim() === "", errorMessage: "Location is required!" }],
       },
       {
         name: startTime,
-        defaultValue: undefined,
+        defaultValue: null,
         conditions: [
           {
-            expression: (value: any) => value === undefined,
+            expression: (value: Date | null) => value === null,
             errorMessage: "Choose a start time!",
           },
           {
-            expression: (value: any) => !value || value < dayjs(Date()),
+            expression: (value: Date | null) => !value || value < new Date(),
             errorMessage: "The chosen start time passed!",
           },
         ],
@@ -58,7 +58,9 @@ export const CreateCompetitionDialog: FC<CreateCompetitionDialogProps> = ({
       {
         name: gameFormat,
         defaultValue: undefined,
-        conditions: [{ expression: (value: any) => value === undefined, errorMessage: "Choose a game format!" }],
+        conditions: [
+          { expression: (value: string | undefined) => value === undefined, errorMessage: "Choose a game format!" },
+        ],
       },
       {
         name: breakInMinutes,
@@ -69,7 +71,10 @@ export const CreateCompetitionDialog: FC<CreateCompetitionDialogProps> = ({
         name: competitionType,
         defaultValue: undefined,
         conditions: [
-          { expression: (value: any) => value === undefined, errorMessage: "Choose the type of the competition!" },
+          {
+            expression: (value: string | undefined) => value === undefined,
+            errorMessage: "Choose the type of the competition!",
+          },
         ],
       },
     ],
@@ -84,10 +89,8 @@ export const CreateCompetitionDialog: FC<CreateCompetitionDialogProps> = ({
     [validation.errors[breakInMinutes]?.value]
   );
 
-  useEffect(() => getGameFormats(), [filter]);
-
-  const getGameFormats = () => {
-    if (user?.role !== UserRole.Administrator) return;
+  useEffect(() => {
+    if (user?.role !== UserRole.Administrator || !dialogIsOpen) return;
 
     const paginatedRequest: PaginatedRequest = {
       pageIndex: 0,
@@ -106,11 +109,12 @@ export const CreateCompetitionDialog: FC<CreateCompetitionDialogProps> = ({
     };
 
     requests.getGameFormatsRequest({ requestBody: paginatedRequest }, (data: any) => setGameFormatList(data.items));
-  };
+  }, [dialogIsOpen, filter]);
 
   const resetFrom = () => {
     validation.reset();
     setOldBreakInMinutes(1);
+    setFilter("");
   };
 
   const createRequest = useCallback(() => {
@@ -134,11 +138,11 @@ export const CreateCompetitionDialog: FC<CreateCompetitionDialogProps> = ({
     <DialogBase
       title="Create competition"
       open={dialogIsOpen}
-      doAction={{ name: "Create", handle: createRequest }}
       handleClose={() => {
         closeDialog();
         resetFrom();
       }}
+      buttons={[<Button onClick={createRequest}>Create</Button>]}
     >
       <Box>
         <TextField
@@ -152,6 +156,17 @@ export const CreateCompetitionDialog: FC<CreateCompetitionDialogProps> = ({
         <FormErrorMessage>{validation.errors[name]?.error}</FormErrorMessage>
       </Box>
       <Box>
+        <DateTimePicker
+          sx={{ width: "100%" }}
+          disablePast
+          referenceDate={dayjs(new Date())}
+          closeOnSelect={false}
+          onChange={(value) => validation.setFieldValue(startTime, value?.toDate())}
+          slotProps={{ textField: { error: Boolean(validation.errors[startTime]?.error) } }}
+        />
+        <FormErrorMessage>{validation.errors[startTime]?.error}</FormErrorMessage>
+      </Box>
+      <Box>
         <TextField
           fullWidth
           label={"Location"}
@@ -163,14 +178,18 @@ export const CreateCompetitionDialog: FC<CreateCompetitionDialogProps> = ({
         <FormErrorMessage>{validation.errors[location]?.error}</FormErrorMessage>
       </Box>
       <Box>
-        <DateTimePicker
-          sx={{ width: "100%" }}
-          disablePast
-          value={validation.errors[startTime]?.value}
-          onChange={(value) => validation.setFieldValue(startTime, value)}
-          slotProps={{ textField: { error: Boolean(validation.errors[location]?.error) } }}
-        />
-        <FormErrorMessage>{validation.errors[startTime]?.error}</FormErrorMessage>
+        <TextField
+          fullWidth
+          select
+          label={"Competition type"}
+          required
+          error={Boolean(validation.errors[competitionType]?.error)}
+          onChange={(event) => validation.setFieldValue(competitionType, event.target.value)}
+        >
+          <MenuItem value={CompetitionType.ONE_VS_ALL}>{CompetitionType.ONE_VS_ALL}</MenuItem>
+          <MenuItem value={CompetitionType.TOURNAMENT}>{CompetitionType.TOURNAMENT}</MenuItem>
+        </TextField>
+        <FormErrorMessage>{validation.errors[competitionType]?.error}</FormErrorMessage>
       </Box>
       <Box>
         <Autocomplete
@@ -215,21 +234,6 @@ export const CreateCompetitionDialog: FC<CreateCompetitionDialogProps> = ({
             validation.setFieldValue(breakInMinutes, number < 1 ? 1 : number);
           }}
         />
-        <FormErrorMessage>{validation.errors[breakInMinutes]?.error}</FormErrorMessage>
-      </Box>
-      <Box>
-        <TextField
-          fullWidth
-          select
-          label={"Competition type"}
-          required
-          error={Boolean(validation.errors[competitionType]?.error)}
-          onChange={(event) => validation.setFieldValue(competitionType, event.target.value)}
-        >
-          <MenuItem value={CompetitionType.ONE_VS_ALL}>{CompetitionType.ONE_VS_ALL}</MenuItem>
-          <MenuItem value={CompetitionType.TOURNAMENT}>{CompetitionType.TOURNAMENT}</MenuItem>
-        </TextField>
-        <FormErrorMessage>{validation.errors[competitionType]?.error}</FormErrorMessage>
       </Box>
     </DialogBase>
   );

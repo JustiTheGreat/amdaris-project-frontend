@@ -1,4 +1,4 @@
-import { Box, TextField } from "@mui/material";
+import { Box, Button, TextField } from "@mui/material";
 import { FC, useCallback, useContext } from "react";
 import { useValidation } from "../../utils/UseValidation";
 import { AppContext } from "../App/App";
@@ -21,7 +21,7 @@ export const CreateTeamDialog: FC<CreateTeamDialogProps> = ({
       {
         name: name,
         defaultValue: "",
-        conditions: [{ expression: (value: any) => value.trim() === "", errorMessage: "Name is required!" }],
+        conditions: [{ expression: (value: string) => value.trim() === "", errorMessage: "Name is required!" }],
       },
     ],
     []
@@ -41,11 +41,11 @@ export const CreateTeamDialog: FC<CreateTeamDialogProps> = ({
     <DialogBase
       title={"Create team"}
       open={dialogIsOpen}
-      doAction={{ name: "Create", handle: createRequest }}
       handleClose={() => {
         closeDialog();
         validation.reset();
       }}
+      buttons={[<Button onClick={createRequest}>Create</Button>]}
     >
       <Box>
         <TextField

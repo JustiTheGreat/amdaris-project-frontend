@@ -1,5 +1,5 @@
 import { Box, Tab, Tabs, Tooltip, useTheme } from "@mui/material";
-import { FC, useMemo, useRef, useState } from "react";
+import { FC, useEffect, useMemo, useRef, useState } from "react";
 import { Outlet } from "react-router-dom";
 import { useRefDimensions } from "../../utils/UseRefDimensions";
 import { HoverAnimation } from "../Animations/HoverAnimation";
@@ -15,12 +15,14 @@ interface NewPageContentContainerProps {
   width?: string;
   tabInfoList?: TabInfo[];
   children?: JSX.Element;
+  firstTabSwitch?: boolean;
 }
 
 export const NewPageContentContainer: FC<NewPageContentContainerProps> = ({
   width,
   tabInfoList = [],
   children,
+  firstTabSwitch,
 }: NewPageContentContainerProps) => {
   const theme = useTheme();
   const slidingContentContainerRef = useRef<Element>();
@@ -29,6 +31,8 @@ export const NewPageContentContainer: FC<NewPageContentContainerProps> = ({
   const isActive = (ti: TabInfo) => ti.content !== undefined && ti.content !== false;
   const activeTabInfoList = useMemo(() => tabInfoList.filter(isActive), [tabInfoList]);
   const [activeTabIndex, setActiveTabIndex] = useState<number>(0);
+
+  useEffect(() => setActiveTabIndex(0), [firstTabSwitch]);
 
   return (
     <Box
@@ -64,25 +68,28 @@ export const NewPageContentContainer: FC<NewPageContentContainerProps> = ({
             }}
             textColor="secondary"
             indicatorColor="secondary"
-            // sx={{ position: "sticky", top: "4rem" }}
           >
             {tabInfoList
               .filter((ti) => ti.icon)
               .map((ti, i) => (
                 <Tab
+                  sx={{
+                    padding: (theme) => theme.spacing(3, 0, 3, 0),
+                    "&:hover .MuiSvgIcon-root": {
+                      transform: "scale(1.3)",
+                      transitionDuration: "2s !important",
+                    },
+                  }}
                   disabled={!isActive(ti)}
                   value={i}
                   icon={
-                    <HoverAnimation key={ti.tooltip}>
-                      <Tooltip
-                        title={ti.tooltip}
-                        placement="left"
-                      >
-                        {ti.icon}
-                      </Tooltip>
-                    </HoverAnimation>
+                    <Tooltip
+                      title={ti.tooltip}
+                      placement="left"
+                    >
+                      {ti.icon}
+                    </Tooltip>
                   }
-                  sx={(theme) => ({ padding: theme.spacing(3, 0, 3, 0) })}
                 />
               ))}
           </Tabs>

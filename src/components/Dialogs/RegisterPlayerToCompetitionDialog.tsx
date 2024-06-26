@@ -1,11 +1,13 @@
-import { Autocomplete, Box, TextField } from "@mui/material";
+import { Autocomplete, Box, Button, TextField } from "@mui/material";
 import { FC, useCallback, useContext, useEffect, useState } from "react";
-import { CompetitionDisplayDTO } from "../../utils/Types";
+import { PaginatedRequest } from "../../utils/PageConstants";
+import { CompetitorDisplayDTO, SortDirection } from "../../utils/Types";
 import { useValidation } from "../../utils/UseValidation";
 import { UserRole } from "../../utils/UserRoles";
 import { AppContext } from "../App/App";
 import { FormErrorMessage } from "../FormErrorMessage/FormErrorMessage";
 import { BaseDialogProps, DialogBase } from "./DialogBase";
+import { ProfilePictureContainer } from "../PictureContainer/ProfilePictureContainer";
 
 interface RegisterPlayerToCompetitionDialogProps extends BaseDialogProps {
   id: string;
@@ -20,7 +22,8 @@ export const RegisterPlayerToCompetitionDialog: FC<RegisterPlayerToCompetitionDi
   reloadDialogData,
 }: RegisterPlayerToCompetitionDialogProps) => {
   const { user, requests } = useContext(AppContext);
-  const [players, setPlayers] = useState<CompetitionDisplayDTO[]>([]);
+  const [players, setPlayers] = useState<CompetitorDisplayDTO[]>([]);
+  const [filter, setFilter] = useState<string>("");
 
   const playerId = "playerId";
 
@@ -29,23 +32,41 @@ export const RegisterPlayerToCompetitionDialog: FC<RegisterPlayerToCompetitionDi
       {
         name: playerId,
         defaultValue: undefined,
-        conditions: [{ expression: (value: any) => value === undefined, errorMessage: "Select a player!" }],
+        conditions: [
+          { expression: (value: string | undefined) => value === undefined, errorMessage: "Select a player!" },
+        ],
       },
     ],
     []
   );
 
   useEffect(() => {
-    if (user?.role !== UserRole.Administrator) return;
-    getPlayersNotInCompetition();
-  }, [reloadDialogData]);
+    if (user?.role !== UserRole.Administrator || !dialogIsOpen) return;
+    const paginatedRequest: PaginatedRequest = {
+      pageIndex: 0,
+      pageSize: 5,
+      columnNameForSorting: "name",
+      sortDirection: SortDirection.ASCENDING,
+      requestFilters: {
+        logicalOperator: 0,
+        filters: [
+          {
+            path: "name",
+            value: filter,
+          },
+        ],
+      },
+    };
 
-  const resetForm = () => validation.setFieldValue(playerId, undefined);
+    requests.getPlayersNotInCompetitionRequest({ id, requestBody: paginatedRequest }, (data: any) =>
+      setPlayers(data.items)
+    );
+  }, [dialogIsOpen, filter, reloadDialogData]);
 
-  const getPlayersNotInCompetition = useCallback(
-    () => requests.getPlayersNotInCompetitionRequest({ id }, (data: any) => setPlayers(data)),
-    [id]
-  );
+  const resetForm = () => {
+    validation.reset();
+    setFilter("");
+  };
 
   const registerPlayerRequest = useCallback(() => {
     if (!validation.pass()) return;
@@ -61,11 +82,11 @@ export const RegisterPlayerToCompetitionDialog: FC<RegisterPlayerToCompetitionDi
     <DialogBase
       title={"Register player"}
       open={dialogIsOpen}
-      doAction={{ name: "Register", handle: registerPlayerRequest }}
       handleClose={() => {
         closeDialog();
         resetForm();
       }}
+      buttons={[<Button onClick={registerPlayerRequest}>Register</Button>]}
     >
       <Box>
         <Autocomplete
@@ -74,11 +95,23 @@ export const RegisterPlayerToCompetitionDialog: FC<RegisterPlayerToCompetitionDi
           getOptionLabel={(player) => player.name}
           filterOptions={(x) => x}
           onChange={(_, value) => validation.setFieldValue(playerId, value?.id)}
+          renderOption={(props, option) => (
+            <Box
+              component="li"
+              sx={{ display: "flex", gap: (theme) => theme.spacing(2) }}
+              {...props}
+            >
+              <ProfilePictureContainer src={option.profilePicture} />
+              {option.name}
+            </Box>
+          )}
           renderInput={(params) => (
             <TextField
               {...params}
               label="Player"
+              value={filter}
               error={Boolean(validation.errors[playerId]?.error)}
+              onChange={(event) => setFilter(event.currentTarget.value)}
             />
           )}
         />

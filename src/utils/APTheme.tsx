@@ -1,31 +1,31 @@
 import { alpha, createTheme } from "@mui/material";
 import "../index.css";
 
-declare module "@mui/materialstyles/createPalette" {
+declare module "@mui/material/styles" {
   interface Palette {
-    page: {
-      backgroundColor: Palette["primary"];
-    };
+    focus: Palette["primary"];
   }
   interface PaletteOptions {
-    page: {
-      backgroundColor: PaletteOptions["primary"];
-    };
+    focus: PaletteOptions["primary"];
   }
 }
 // const purple = "#8e24aa";
 const purple = "#301934";
-// const purple_light = "#c995d7";
+const purple_light = "#c995d7";
 const periwinkle = "#BBB6DF";
-// const orange = "#ffb74d";
+const orange = "#ffb74d";
 const oldRose = "#BD6B73";
 const white = "#FFFFFF";
 const red = "#FF0000";
-// const green = "#4caf50";
+const green = "#4caf50";
 const saffron = "#F3CA40";
 const gamboge = "#F2A541";
 const celestialBlue = "#0098D0";
 const paleAzure = "#85DEFF";
+const darkGamboge = "#E49B0F";
+const lapisLazuli = "#1A659E";
+const ecru = "#5C6B73";
+const purpureus = "#A641A4";
 
 const definedColors = {
   primary: {
@@ -35,13 +35,14 @@ const definedColors = {
   },
   secondary: {
     main: oldRose,
+    light: alpha(oldRose, 0.4),
     contrastText: purple,
   },
   focus: {
-    main: gamboge,
+    main: purpureus,
     contrastText: periwinkle,
-    activatedOpacity: 0.4,
-    hoverOpacity: 0.6,
+    selected: alpha(purpureus, 0.4),
+    hover: alpha(purpureus, 0.6),
   },
   error: {
     main: red,
@@ -57,6 +58,11 @@ export default createTheme({
     },
     secondary: {
       main: definedColors.secondary.main,
+      light: definedColors.secondary.light,
+    },
+    focus: {
+      main: definedColors.focus.main,
+      light: definedColors.focus.hover,
     },
     error: {
       main: definedColors.error.main,
@@ -74,7 +80,7 @@ export default createTheme({
         root: {
           "&:hover": {
             color: definedColors.primary.main,
-            backgroundColor: alpha(definedColors.focus.main, definedColors.focus.hoverOpacity),
+            backgroundColor: definedColors.focus.hover,
           },
         },
       },
@@ -87,14 +93,14 @@ export default createTheme({
           "&.Mui-selected": {
             color: definedColors.focus.contrastText,
 
-            backgroundColor: alpha(definedColors.focus.main, definedColors.focus.activatedOpacity),
+            backgroundColor: definedColors.focus.selected,
           },
           "&:hover": {
-            backgroundColor: alpha(definedColors.focus.main, definedColors.focus.hoverOpacity),
+            backgroundColor: definedColors.focus.hover,
           },
           "&.Mui-selected:hover": {
             color: definedColors.focus.contrastText,
-            backgroundColor: alpha(definedColors.focus.main, definedColors.focus.hoverOpacity),
+            backgroundColor: definedColors.focus.hover,
           },
         },
       },
@@ -160,13 +166,13 @@ export default createTheme({
       styleOverrides: {
         root: {
           "&.Mui-selected": {
-            backgroundColor: alpha(definedColors.focus.main, definedColors.focus.activatedOpacity),
+            backgroundColor: definedColors.focus.selected,
           },
           "&:hover": {
-            backgroundColor: alpha(definedColors.focus.main, definedColors.focus.hoverOpacity),
+            backgroundColor: definedColors.focus.hover,
           },
           "&.Mui-selected:hover": {
-            backgroundColor: alpha(definedColors.focus.main, definedColors.focus.hoverOpacity),
+            backgroundColor: definedColors.focus.hover,
           },
         },
       },
@@ -176,14 +182,31 @@ export default createTheme({
         root: {
           color: definedColors.primary.contrastText,
           "&:hover": {
-            color: definedColors.primary.contrastText,
+            color: definedColors.secondary.main,
           },
           "&.Mui-active": {
-            color: definedColors.primary.contrastText,
+            color: definedColors.secondary.main,
           },
           "&.Mui-active .MuiTableSortLabel-icon": {
-            color: definedColors.primary.contrastText,
+            color: definedColors.secondary.main,
           },
+        },
+      },
+    },
+    MuiFab: {
+      styleOverrides: {
+        root: {
+          backgroundColor: definedColors.secondary.main,
+          "&:hover": {
+            backgroundColor: definedColors.focus.main,
+          },
+        },
+      },
+    },
+    MuiTooltip: {
+      styleOverrides: {
+        tooltip: {
+          backgroundColor: definedColors.secondary.main,
         },
       },
     },

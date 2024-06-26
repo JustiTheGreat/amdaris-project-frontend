@@ -1,6 +1,7 @@
-import { Autocomplete, Box, TextField } from "@mui/material";
+import { Autocomplete, Box, Button, TextField } from "@mui/material";
 import { FC, useCallback, useContext, useEffect, useState } from "react";
-import { CompetitionDisplayDTO } from "../../utils/Types";
+import { PaginatedRequest } from "../../utils/PageConstants";
+import { CompetitionDisplayDTO, SortDirection } from "../../utils/Types";
 import { useValidation } from "../../utils/UseValidation";
 import { UserRole } from "../../utils/UserRoles";
 import { AppContext } from "../App/App";
@@ -21,6 +22,7 @@ export const RegisterTeamToCompetitionDialog: FC<RegisterTeamToCompetitionDialog
 }: RegisterTeamToCompetitionDialogProps) => {
   const { user, requests } = useContext(AppContext);
   const [teams, setTeams] = useState<CompetitionDisplayDTO[]>([]);
+  const [filter, setFilter] = useState<string>("");
 
   const teamId = "teamId";
 
@@ -29,23 +31,41 @@ export const RegisterTeamToCompetitionDialog: FC<RegisterTeamToCompetitionDialog
       {
         name: teamId,
         defaultValue: undefined,
-        conditions: [{ expression: (value: any) => value === undefined, errorMessage: "Select a Team!" }],
+        conditions: [
+          { expression: (value: string | undefined) => value === undefined, errorMessage: "Select a Team!" },
+        ],
       },
     ],
     []
   );
 
   useEffect(() => {
-    if (user?.role !== UserRole.Administrator && !dialogIsOpen) return;
-    getTeamsThatCanBeAddedToCompetition();
-  }, [dialogIsOpen, reloadDialogData]);
+    if (user?.role !== UserRole.Administrator || !dialogIsOpen) return;
+    const paginatedRequest: PaginatedRequest = {
+      pageIndex: 0,
+      pageSize: 5,
+      columnNameForSorting: "name",
+      sortDirection: SortDirection.ASCENDING,
+      requestFilters: {
+        logicalOperator: 0,
+        filters: [
+          {
+            path: "name",
+            value: filter,
+          },
+        ],
+      },
+    };
 
-  const resetForm = () => validation.setFieldValue(teamId, undefined);
+    requests.getTeamsThatCanBeAddedToCompetitionRequest({ id, requestBody: paginatedRequest }, (data: any) =>
+      setTeams(data.items)
+    );
+  }, [dialogIsOpen, filter, reloadDialogData]);
 
-  const getTeamsThatCanBeAddedToCompetition = useCallback(
-    () => requests.getTeamsThatCanBeAddedToCompetitionRequest({ id }, (data: any) => setTeams(data)),
-    [id]
-  );
+  const resetForm = () => {
+    validation.reset();
+    setFilter("");
+  };
 
   const registerTeamRequest = useCallback(() => {
     if (!validation.pass()) return;
@@ -61,11 +81,11 @@ export const RegisterTeamToCompetitionDialog: FC<RegisterTeamToCompetitionDialog
     <DialogBase
       title={"Register team"}
       open={dialogIsOpen}
-      doAction={{ name: "Register", handle: registerTeamRequest }}
       handleClose={() => {
         closeDialog();
         resetForm();
       }}
+      buttons={[<Button onClick={registerTeamRequest}>Register</Button>]}
     >
       <Box>
         <Autocomplete
@@ -78,7 +98,9 @@ export const RegisterTeamToCompetitionDialog: FC<RegisterTeamToCompetitionDialog
             <TextField
               {...params}
               label="Team"
+              value={filter}
               error={Boolean(validation.errors[teamId]?.error)}
+              onChange={(event) => setFilter(event.currentTarget.value)}
             />
           )}
         />

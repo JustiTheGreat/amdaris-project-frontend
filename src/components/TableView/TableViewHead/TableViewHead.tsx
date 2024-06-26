@@ -27,6 +27,7 @@ export const TableViewHead = <T extends IdDTO>({
         sx={{
           position: "sticky",
           top: 0,
+          zIndex: 1,
         }}
       >
         {keysOfT.map((keyOfT) => (
