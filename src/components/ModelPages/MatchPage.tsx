@@ -36,7 +36,15 @@ export const MatchPage: FC = () => {
 
   const getModel = () => requests.getMatchRequest({ id }, (data: any) => setMatch(data));
 
-  const startRequest = () => requests.startMatchRequest({ id }, (data: any) => setMatch(data));
+  const startRequest = () =>
+    requests.startMatchRequest({ id }, (data: any) => {
+      setMatch(data);
+      if (
+        data.competition.status === CompetitionStatus.FINISHED ||
+        data.competition.status === CompetitionStatus.CANCELED
+      )
+        setFirstTabSwitch(!firstTabSwitch);
+    });
 
   const endRequest = (
     endStatus: MatchStatus.FINISHED | MatchStatus.SPECIAL_WIN_COMPETITOR_ONE | MatchStatus.SPECIAL_WIN_COMPETITOR_TWO

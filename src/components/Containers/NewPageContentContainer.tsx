@@ -2,7 +2,6 @@ import { Box, Tab, Tabs, Tooltip, useTheme } from "@mui/material";
 import { FC, useEffect, useMemo, useRef, useState } from "react";
 import { Outlet } from "react-router-dom";
 import { useRefDimensions } from "../../utils/UseRefDimensions";
-import { HoverAnimation } from "../Animations/HoverAnimation";
 import { VisibilityAnimation } from "../Animations/VisibilityAnimation";
 
 export interface TabInfo {
@@ -63,9 +62,7 @@ export const NewPageContentContainer: FC<NewPageContentContainerProps> = ({
             orientation="vertical"
             variant="scrollable"
             value={activeTabIndex}
-            onChange={(_, value) => {
-              setActiveTabIndex(value);
-            }}
+            onChange={(_, value) => setActiveTabIndex(value)}
             textColor="secondary"
             indicatorColor="secondary"
           >
